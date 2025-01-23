@@ -1,19 +1,16 @@
-// ℹ️ package responsible to make the connection with mongodb
-// https://www.npmjs.com/package/mongoose
-const mongoose = require("mongoose");
+const {Client} = require('pg');
+require('dotenv').config();
 
-// ℹ️ Sets the MongoDB URI for our app to have access to it.
-// If no env has been set, we dynamically set it to whatever the folder name was upon the creation of the app
+const db = new Client({
+user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+})
 
-const MONGO_URI =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/TienditaClient";
+db.connect()
+.then(()=>console.log('Connected to PostgreSQL'))
+.catch(err=>console.log("Failed to connect to PostgreSQL"))
 
-mongoose
-  .connect(MONGO_URI)
-  .then((x) => {
-    const dbName = x.connections[0].name;
-    console.log(`Connected to Mongo! Database name: "${dbName}"`);
-  })
-  .catch((err) => {
-    console.error("Error connecting to mongo: ", err);
-  });
+module.exports = db

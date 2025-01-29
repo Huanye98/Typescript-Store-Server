@@ -18,7 +18,8 @@ router.get("/:id",usersController.userGetsData)
 router.patch("/modify/:id", usersController.modifyUserData)
 //delete account
 router.delete("/:id", verifyToken, usersController.deleteUser)
-
+//empty cart
+router.delete("/cart/:cart_id", usersController.emptyCart)
 
 
 module.exports = router

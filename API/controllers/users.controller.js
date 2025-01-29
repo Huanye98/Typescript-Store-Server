@@ -14,7 +14,7 @@ const createUser = async (req, res, next) => {
     const newUser = await Users.createUser(email, password);
     res.status(201).json(newUser);
   } catch (error) {
-    next(error);
+      next(error);
   }
 };
 
@@ -135,12 +135,21 @@ const userGetsData = async (req,res,next)=>{
   const {id} = req.params
   try {
     const response = await Users.userGetTheirData(id)
+    console.log(response[0].cart_items)
     res.status(200).json({message: " fetched user data successfully",response})
   } catch (error) {
     next(error)
   }
 }
-
+const emptyCart = async(req,res,next)=>{
+  const {cart_id} = req.params
+  try {
+    await Users.emptyCartFromDb(cart_id)
+    res.status(200).json({message: "Cart emptied correctly"})
+  } catch (error) {
+    next(error)
+  }
+}
 module.exports = {
   getAllUsers,
   createUser,
@@ -149,5 +158,6 @@ module.exports = {
   addProductToCart,
   removeProductFromCart,
   modifyUserData,
-  userGetsData
+  userGetsData,
+  emptyCart
 };

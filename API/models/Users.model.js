@@ -2,25 +2,56 @@ const pool = require("../../db/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const createUser = async (email, password) => {
-  const salt = 10;
-  const hashPassword = await bcrypt.hash(password, salt);
+const checkIfEmailIsUsed = async (email) => {
+  try {
+    const query = "select * from users where email = $1";
+    const response = await pool.query(query, [email]);
+    return response.rows.length > 0;
+  } catch (error) {
+    throw new Error(`Database Error: Failed to check email. ${error.message}`);
+  }
+};
 
-  const res = await pool.query(
-    "INSERT INTO users(email,password) VALUES ($1, $2) RETURNING *",
-    [email, hashPassword]
-  );
-  const cartRes = await pool.query(
-    "insert into cart(user_id) values ($1) returning *",
-    [res.rows[0].id]
-  );
-  await pool.query("update users set cart_id = $1 where id = $2", [cartRes.rows[0].id,res.rows[0].id]);
-  return res.rows[0];
+const createUser = async (email, password) => {
+  try {
+    if (!email || !password) {
+      throw new Error("Email and password are obligatory");
+    }
+    const isEmailUsed = await checkIfEmailIsUsed(email);
+    if (isEmailUsed) {
+      throw new Error("Email is already in use");
+    }
+    const passwordRegex =
+      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/gm;
+    if (passwordRegex.test(password) === false) {
+      throw new Error(
+        " The password must be 8 characters minimun,have an upper and lowercase, and a special character"
+      );
+    }
+    const salt = 10;
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    const userRes = await pool.query(
+      "INSERT INTO users(email,password) VALUES ($1, $2) RETURNING *",
+      [email, hashPassword]
+    );
+    const cartRes = await pool.query(
+      "insert into cart(user_id) values ($1) returning *",
+      [userRes.rows[0].id]
+    );
+    await pool.query("update users set cart_id = $1 where id = $2", [
+      cartRes.rows[0].id,
+      userRes.rows[0].id,
+    ]);
+    return userRes.rows[0];
+  } catch (error) {
+    throw new Error(`Database Error: Failed to create user. ${error.message}`);
+  }
 };
 
 const getAllUsers = async () => {
-  // const response = await pool.query("SELECT * FROM users");
-  const query = `
+  try {
+    const query = `
   SELECT users.id AS user_id, 
          users.email, 
          users.role,
@@ -42,37 +73,55 @@ const getAllUsers = async () => {
   GROUP BY users.id, cart.id;
 `;
 
-  const response = await pool.query(query);
-  return response.rows;
+    const response = await pool.query(query);
+    return response.rows;
+  } catch (error) {
+    throw new Error(`Database Error: Failed to query users. ${error.message}`);
+  }
 };
 
 // receieves request w/ email and password and check the database if it exists in the db if so a new jwt is created
 const login = async (email, password) => {
-  const res = await pool.query(" select * from users where email = $1 ", [
-    email,
-  ]);
-  //check email
-  const user = res.rows[0];
-  if (!user) {
-    throw new Error("invalid email");
-  }
-  //check password
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    throw new Error("invalid password");
-  }
-  //create token
-  const token = jwt.sign(
-    { userId: user.id, 
-      role: user.role,
-      cartId : user.cart_id},
+  try {
+    const res = await pool.query(" select * from users where email = $1 ", [
+      email,
+    ]);
+    //check email
+    const user = res.rows[0];
+    if (!user) {
+      throw new Error("invalid email");
+    }
+    //check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("invalid password");
+    }
+    //create token
+    const token = jwt.sign(
+      { userId: user.id, role: user.role, cartId: user.cart_id },
       process.env.JWT_SECRET,
-    { expiresIn: "48h" }
-  );
-  return { token, user: { id: user.id, email: user.email, role: user.role, cartId: user.cart_id } };
+      { expiresIn: "48h" }
+    );
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        cartId: user.cart_id,
+      },
+    };
+  } catch (error) {
+    throw new Error(`Authentication Error: ${error.message}`);
+  }
 };
 
-const addProductToUserCartDb = async (product_id, quantity, user_id, cart_id) => {
+const addProductToUserCartDb = async (
+  product_id,
+  quantity,
+  user_id,
+  cart_id
+) => {
   if (!product_id) {
     return { message: "Missing required field: productId" };
   }
@@ -80,7 +129,7 @@ const addProductToUserCartDb = async (product_id, quantity, user_id, cart_id) =>
     return { message: "Missing required field: quantity" };
   }
   if (!user_id) {
-    return{ message: "Missing required field: userId" };
+    return { message: "Missing required field: userId" };
   }
   if (!cart_id) {
     return { message: "Missing required field: cart_id" };
@@ -108,11 +157,13 @@ const addProductToUserCartDb = async (product_id, quantity, user_id, cart_id) =>
       await pool.query(updateProductQuantity, [quantity, user_id, product_id]);
       console.log("Product successfully updated in the cart");
     } else {
-      await pool.query(addProduct, [user_id, product_id, quantity,cart_id]);
+      await pool.query(addProduct, [user_id, product_id, quantity, cart_id]);
       console.log("Product successfully added in the cart");
     }
   } catch (error) {
-    console.error("failed to add to cart", error);
+    throw new Error(
+      `Database Error: Failed add product to cart: ${error.message}`
+    );
   }
 };
 const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
@@ -158,14 +209,20 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
         await pool.query(removeProduct, [user_id, product_id]);
         console.log("Product successfully updated from the cart");
       } else {
-        await pool.query(updateProductQuantity, [quantity,user_id,product_id]);
+        await pool.query(updateProductQuantity, [
+          quantity,
+          user_id,
+          product_id,
+        ]);
         console.log("Product successfully removed from the cart");
       }
     } else {
       console.log("Product not found in cart");
     }
   } catch (error) {
-    console.error("failed to remove from cart", error);
+    throw new Error(
+      `Database Error: failed to remove from cart ${error.message}`
+    );
   }
 };
 
@@ -194,12 +251,14 @@ const modifyUserDataDB = async (email, address, password, user_id) => {
     // Add the WHERE clause with the user_id
     baseQuery += " WHERE id = $2";
     values.push(user_id);
-    console.log(baseQuery,values)
+    console.log(baseQuery, values);
     // Execute the query
     const response = await pool.query(baseQuery, values);
-    console.log("User data successfully updated",response);
+    console.log("User data successfully updated", response);
   } catch (error) {
-    console.error("Error updating user data:", error);
+    throw new Error(
+      `Database Error: Was not able to modify user. ${error.message}`
+    );
   }
 };
 
@@ -208,7 +267,9 @@ const getUserById = async (id) => {
     const result = await pool.query("SELECT * FROM Users WHERE id = $1", [id]);
     return result.rows[0];
   } catch (error) {
-    console.log("was not able to get user", error);
+    throw new Error(
+      `Database Error: was not able to get selected user. ${error.message}`
+    );
   }
 };
 const deleteUserFromDB = async (userRole) => {
@@ -217,7 +278,9 @@ const deleteUserFromDB = async (userRole) => {
     const response = await pool.query(query, userRole);
     return response.rows[0];
   } catch (error) {
-    console.log("was not able to delete user", error);
+    throw new Error(
+      `Database Error: was not able to delete user ${error.message}`
+    );
   }
 };
 
@@ -252,21 +315,34 @@ const userGetTheirData = async (id) => {
     WHERE users.id = $1
     GROUP BY users.id;
   `;
-  
+
     const response = await pool.query(query, [id]);
-    const cart  = response.rows[0].cart_items
-    const cartPrice = Object.values(cart).reduce((accumulator,item)=>{
-      return accumulator + item.final_price * item.quantity
-    },0)
-    response.rows[0].stripePrice = cartPrice*100
-    response.rows[0].cartPrice = cartPrice
-    
+    const cart = response.rows[0].cart_items ;
+    const cartPrice = Object.values(cart).reduce((accumulator, item) => {
+      return accumulator + item.final_price * item.quantity;
+    }, 0);
+    response.rows[0].stripePrice = cartPrice * 100;
+    response.rows[0].cartPrice = cartPrice;
+
     return response.rows;
   } catch (error) {
-    console.error("Failed to fetch user data:", error);
-    throw new Error("Could not retrieve user data");
+    throw new Error(
+      `Database Error: Could not retrieve user data. ${error.message}`
+    );
   }
 };
+
+const emptyCartFromDb = async (cart_id)=>{
+  if(!cart_id){
+    throw new Error("No cart_id")
+  }
+  try {
+    const query = "Delete from cart_items where cart_id = $1"
+    await pool.query(query,[cart_id])
+  } catch (error) {
+    throw new Error(`Database Error: was not able to empty cart`)
+  }
+}
 
 module.exports = {
   createUser,
@@ -278,4 +354,5 @@ module.exports = {
   getUserById,
   modifyUserDataDB,
   userGetTheirData,
+  emptyCartFromDb
 };

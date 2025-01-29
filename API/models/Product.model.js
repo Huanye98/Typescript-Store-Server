@@ -20,6 +20,7 @@ const getProducts = async (filters = {}) => {
     category,
     collection,
     sort,
+    isavaliable,
     is_featured,
     page = 1,
     limit = 10,
@@ -46,6 +47,10 @@ const getProducts = async (filters = {}) => {
     baseQuery += ` AND products.is_featured = $${index++}`;
     values.push(is_featured);
   }
+  if (isavaliable){
+    baseQuery += ` AND products.isavaliable = $${index++}`;
+    values.push(isavaliable);
+  }
   if (collection) {
     baseQuery += ` AND products.collection_id = $${index++}`;
     values.push(collection);
@@ -65,7 +70,7 @@ const getProducts = async (filters = {}) => {
   //sort
   if (sort) {
     const [column, direction] = sort.split(":");
-    const validColumns = ["name", "price", "items_sold", "created_at"];
+    const validColumns = ["name", "price", "items_sold", "created_at",];
     const validDirections = ["asc", "desc"];
 
     if (

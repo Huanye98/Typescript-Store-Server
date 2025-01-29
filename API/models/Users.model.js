@@ -317,7 +317,7 @@ const userGetTheirData = async (id) => {
   `;
 
     const response = await pool.query(query, [id]);
-    const cart = response.rows[0].cart_items ;
+    const cart = response.rows[0].cart_items || [] ;
     const cartPrice = Object.values(cart).reduce((accumulator, item) => {
       return accumulator + item.final_price * item.quantity;
     }, 0);

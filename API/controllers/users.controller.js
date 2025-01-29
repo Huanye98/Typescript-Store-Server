@@ -135,7 +135,6 @@ const userGetsData = async (req,res,next)=>{
   const {id} = req.params
   try {
     const response = await Users.userGetTheirData(id)
-    console.log(response[0].cart_items)
     res.status(200).json({message: " fetched user data successfully",response})
   } catch (error) {
     next(error)

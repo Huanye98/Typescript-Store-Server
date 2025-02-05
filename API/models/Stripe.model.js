@@ -14,10 +14,10 @@ const storeTransactionDb = async (
       [paymentId, userId, amount, currency, status, clientSecret]
     );
   } catch (error) {
-    console.log("Database error:", error);
-    throw error;
+    throw new Error(`Database Error: failed to store transaction. ${error.message}`);
   }
 };
+
 const updatePaymentIntentDb = async (paymentIntentId, clientSecret) => {
   try {
     const payment = await db.query(
@@ -32,7 +32,7 @@ const updatePaymentIntentDb = async (paymentIntentId, clientSecret) => {
     }
   } catch (error) {
     console.log("Database error:", error);
-    throw error;
+    throw new Error(`Database Error: failed to update payment data. ${error.message}`);
   }
 };
 

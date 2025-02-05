@@ -8,8 +8,7 @@ const queryAllProducts = async ()=>{
     const response = await db.query(allQuery)
     return response.rows
   } catch (error) {
-    console.error("was not able to fetch all products",error)
-    throw error
+    throw new Error(`Database Error:was not able to fetch all products. ${error.message} `)
   }
 }
 
@@ -38,7 +37,6 @@ const getProducts = async (filters = {}) => {
     baseQuery += ` AND products.id = $${index++}`;
     values.push(id);
   }
-
   if (category) {
     baseQuery += ` AND products.category = $${index++}`;
     values.push(category);
@@ -59,6 +57,7 @@ const getProducts = async (filters = {}) => {
     baseQuery += ` AND products.name ILIKE $${index++}`;
     values.push(`%${search}%`);
   }
+  // get the amount of products
   const countQuery = `select count(*)${baseQuery}`;
   let queryText = `
   SELECT 
@@ -111,8 +110,7 @@ const getProducts = async (filters = {}) => {
 
     return { products, totalCount };
   } catch (error) {
-    console.error("Error fetching products:", error);
-    throw error;
+    throw new Error(`Database Error: Was not able to fetch selected products. ${error.message}`);
   }
 };
 
@@ -180,7 +178,7 @@ const createProduct = async (
     return res.rows[0];
   } catch (error) {
     console.error("Error creating product:", error.message);
-    throw new Error("Failed to create product");
+    throw new Error(`Database Error: Failed to create product. ${error.message}`);
   }
 };
 
@@ -197,7 +195,7 @@ const findAndDeleteProduct = async (id) => {
     return rows[0];
   } catch (error) {
     console.error("Error deleting product:", error.message);
-    throw new Error("Failed to delete product");
+    throw new Error(`Database Error: Failed to delete product. ${error.message}`);
   }
 };
 
@@ -226,8 +224,7 @@ const patchProductInDB = async (productId, updates) => {
 
     return { message: "Product updated successfully" };
   } catch (error) {
-    console.error("error updating product", error);
-    throw new Error("Failed to update product");
+    throw new Error(`Database Error: Failed to update product. ${error.message}`);
   }
 };
 

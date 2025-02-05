@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "node server.js"
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",

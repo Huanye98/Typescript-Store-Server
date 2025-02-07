@@ -2,7 +2,7 @@ const express = require("express");
 const logger = require("morgan");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const FRONTEND_URL = process.env.ORIGIN || "canvasandchaos.netlify.app";
+const FRONTEND_URL = process.env.ORIGIN || "https://canvasandchaos.netlify.app";
 
 module.exports = (app) => {
   app.set("trust proxy", 1);

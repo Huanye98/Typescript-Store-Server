@@ -13,7 +13,10 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "my-app", 
     allowed_formats: ["jpg", "png","webp"],
-    format:"webp",
+    transformation:[{
+      quality:"auto",
+      fetch_format:"webp"
+    }]
   },
 });
 

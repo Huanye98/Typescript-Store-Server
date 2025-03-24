@@ -1,7 +1,6 @@
 const pool = require("../../db/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-
 const checkIfEmailIsUsed = async (email) => {
   try {
     const query = "select * from users where email = $1";
@@ -11,6 +10,7 @@ const checkIfEmailIsUsed = async (email) => {
     throw new Error(`Database Error: Failed to check email. ${error.message}`);
   }
 };
+
 
 const createUser = async (email, password) => {
   try {
@@ -35,10 +35,12 @@ const createUser = async (email, password) => {
       "INSERT INTO users(email,password) VALUES ($1, $2) RETURNING *",
       [email, hashPassword]
     );
+  
     const cartRes = await pool.query(
       "insert into cart(user_id) values ($1) returning *",
       [userRes.rows[0].id]
     );
+
     await pool.query("update users set cart_id = $1 where id = $2", [
       cartRes.rows[0].id,
       userRes.rows[0].id,
@@ -80,23 +82,22 @@ const getAllUsers = async () => {
   }
 };
 
-// receieves request w/ email and password and check the database if it exists in the db if so a new jwt is created
 const login = async (email, password) => {
   try {
     const res = await pool.query(" select * from users where email = $1 ", [
       email,
     ]);
-    //check email
+
     const user = res.rows[0];
     if (!user) {
       throw new Error("invalid email");
     }
-    //check password
+ 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new Error("invalid password");
     }
-    //create token
+
     const token = jwt.sign(
       { userId: user.id, role: user.role, cartId: user.cart_id },
       process.env.JWT_SECRET,
@@ -180,7 +181,6 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
   if (!user_id) {
     return res.status(400).json({ message: "Missing required field: userId" });
   }
-  //checks if user exists in the db
   const userCheckQuery = "SELECT * FROM users WHERE id = $1";
   const userResponse = await pool.query(userCheckQuery, [user_id]);
   if (userResponse.rows.length === 0) {
@@ -188,7 +188,6 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
     return;
   }
 
-  // depending on if the product exists on the users cart, it will delete or remove quantity
   const checkIfProductExists =
     "select * from cart_items where user_id = $1 and product_id = $2 ";
   const removeProduct =
@@ -228,11 +227,9 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
 
 const modifyUserDataDB = async (email, address, password, user_id) => {
   try {
-    // Initialize the base query
     let baseQuery = "UPDATE users SET ";
     let values = [];
 
-    // Build the query dynamically based on the provided fields
     if (email) {
       baseQuery += "email = $1  ";
       values.push(email);
@@ -248,11 +245,10 @@ const modifyUserDataDB = async (email, address, password, user_id) => {
       values.push(hashPassword);
     }
 
-    // Add the WHERE clause with the user_id
     baseQuery += " WHERE id = $2";
     values.push(user_id);
     console.log(baseQuery, values);
-    // Execute the query
+
     const response = await pool.query(baseQuery, values);
     console.log("User data successfully updated", response);
   } catch (error) {
@@ -299,7 +295,7 @@ const userGetTheirData = async (id) => {
           'product_price', products.price,
           'product_id', cart_items.product_id, 
           'quantity', cart_items.quantity,
-          'discount', products.discountvalue,  -- Updated to 'discountvalue'
+          'discount', products.discountvalue,
           'final_price',
           CASE 
             WHEN products.discountvalue < 0 OR products.discountvalue > 1 THEN products.price 
@@ -317,7 +313,7 @@ const userGetTheirData = async (id) => {
   `;
 
     const response = await pool.query(query, [id]);
-    const cart = response.rows[0].cart_items || [] ;
+    const cart = response.rows[0].cart_items || [];
     const cartPrice = Object.values(cart).reduce((accumulator, item) => {
       return accumulator + item.final_price * item.quantity;
     }, 0);
@@ -332,17 +328,17 @@ const userGetTheirData = async (id) => {
   }
 };
 
-const emptyCartFromDb = async (cart_id)=>{
-  if(!cart_id){
-    throw new Error("No cart_id")
+const emptyCartFromDb = async (cart_id) => {
+  if (!cart_id) {
+    throw new Error("No cart_id");
   }
   try {
-    const query = "Delete from cart_items where cart_id = $1"
-    await pool.query(query,[cart_id])
+    const query = "Delete from cart_items where cart_id = $1";
+    await pool.query(query, [cart_id]);
   } catch (error) {
-    throw new Error(`Database Error: was not able to empty cart`)
+    throw new Error(`Database Error: was not able to empty cart`);
   }
-}
+};
 
 module.exports = {
   createUser,
@@ -354,5 +350,5 @@ module.exports = {
   getUserById,
   modifyUserDataDB,
   userGetTheirData,
-  emptyCartFromDb
+  emptyCartFromDb,
 };

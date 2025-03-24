@@ -18,7 +18,6 @@ const createUser = async (req, res, next) => {
   }
 };
 
-// receives a request with authorization headers containing jwt, if valid it will send the user data stored in the payload
 const login = async (req, res, next) => {
   const { email, password, role } = req.body;
   try {

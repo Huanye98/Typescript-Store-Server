@@ -87,12 +87,17 @@ const login = async (email, password) => {
     const res = await pool.query(" select * from users where email = $1 ", [
       email,
     ]);
-
     const user = res.rows[0];
+
     if (!user) {
       throw new Error("invalid email");
     }
- 
+    
+    if(user.is_verified === false) {
+      const error = new Error("Email not verified");
+      error.status = 401;
+      throw error;
+    }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new Error("invalid password");
@@ -268,10 +273,12 @@ const getUserById = async (id) => {
     );
   }
 };
-const deleteUserFromDB = async (userRole) => {
+const deleteUserFromDB = async (user_id,cart_id) => {
   try {
-    const query = `delete from users where id = 1$ `;
-    const response = await pool.query(query, userRole);
+    const query = `delete from users where id = $1;`;
+    const query2 = `delete from cart where id = $1;`;
+    const response = await pool.query(query, [user_id]);
+    await pool.query(query2, [cart_id]);
     return response.rows[0];
   } catch (error) {
     throw new Error(

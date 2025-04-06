@@ -14,7 +14,7 @@ const createUser = async (req, res, next) => {
     const newUser = await Users.createUser(email, password);
     res.status(201).json(newUser);
   } catch (error) {
-      next(error);
+    next(error);
   }
 };
 
@@ -30,7 +30,7 @@ const login = async (req, res, next) => {
 
 const addProductToCart = async (req, res, next) => {
   const { product_id, quantity, user_id, cart_id } = req.body;
-  console.log(req.body)
+  console.log(req.body);
   if (!product_id) {
     return res
       .status(400)
@@ -90,20 +90,21 @@ const removeProductFromCart = async (req, res, next) => {
   }
 };
 
-const modifyUserData = async (req,res,next)=>{
-  const {email, address, password} = req.body
-  const user_id = req.params.id
+const modifyUserData = async (req, res, next) => {
+  const { email, address, password } = req.body;
+  const user_id = req.params.id;
   try {
-    await Users.modifyUserDataDB(email, address, password, user_id) 
-    res.status(200).json({message: "User data modified successfully"})
+    await Users.modifyUserDataDB(email, address, password, user_id);
+    res.status(200).json({ message: "User data modified successfully" });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const deleteUser = async (req, res, next) => {
   const { id } = req.params;
-  const userId = req.user.id;
+  const userId = req.user.userId;
+  const cart_id = req.user.cartId;
   const userRole = req.user.role;
 
   try {
@@ -111,16 +112,16 @@ const deleteUser = async (req, res, next) => {
     if (!userToDelete) {
       return res.status(404).json({ error: "user not found" });
     }
+    if (userRole !== "admin" && userToDelete.role === "admin") {
+      return res.status(403).json({ error: "you cannot delete this account" });
+    }
     if (userRole !== "admin" && userId !== parseInt(id)) {
       return res
         .status(403)
-        .json({ error: "you can only delete your account" });
-    }
-    if (userRole !== admin && userToDelete === "admin") {
-      return res.status(403).json({ error: "you cannot delete this account" });
+        .json({ error: "you cannot delete this account" });
     }
 
-    const deletedUser = await Users.deleteUserFromDB(id);
+    const deletedUser = await Users.deleteUserFromDB(id, cart_id);
 
     return res
       .status(200)
@@ -130,24 +131,26 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-const userGetsData = async (req,res,next)=>{
-  const {id} = req.params
+const userGetsData = async (req, res, next) => {
+  const { id } = req.params;
   try {
-    const response = await Users.userGetTheirData(id)
-    res.status(200).json({message: " fetched user data successfully",response})
+    const response = await Users.userGetTheirData(id);
+    res
+      .status(200)
+      .json({ message: " fetched user data successfully", response });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
-const emptyCart = async(req,res,next)=>{
-  const {cart_id} = req.params
+};
+const emptyCart = async (req, res, next) => {
+  const { cart_id } = req.params;
   try {
-    await Users.emptyCartFromDb(cart_id)
-    res.status(200).json({message: "Cart emptied correctly"})
+    await Users.emptyCartFromDb(cart_id);
+    res.status(200).json({ message: "Cart emptied correctly" });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 module.exports = {
   getAllUsers,
   createUser,
@@ -157,5 +160,5 @@ module.exports = {
   removeProductFromCart,
   modifyUserData,
   userGetsData,
-  emptyCart
+  emptyCart,
 };

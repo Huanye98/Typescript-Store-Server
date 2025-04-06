@@ -8,7 +8,9 @@ module.exports = (app) => {
     if(err.message.includes("Email is already in use")){
       return res.status(409).json({ error: "Internal Server Error" })
     }
-
+    if(err.message.includes("Email not verified")){
+      return res.status(401).json({ error: "Email not verified" });
+    }
     if (err.message.includes("Database Error")) {
       return res.status(500).json({ error: "Internal Server Error" });
     }

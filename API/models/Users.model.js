@@ -230,10 +230,14 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
   }
 };
 
-const modifyUserDataDB = async (email, address, password, user_id) => {
+const modifyUserDataDB = async (email, address, password, user_id, name) => {
   try {
     let baseQuery = "UPDATE users SET ";
     let values = [];
+    if(name){
+      baseQuery += "name = $1 ";
+      values.push(name);
+    }
 
     if (email) {
       baseQuery += "email = $1  ";
@@ -253,7 +257,6 @@ const modifyUserDataDB = async (email, address, password, user_id) => {
     baseQuery += " WHERE id = $2";
     values.push(user_id);
     console.log(baseQuery, values);
-
     const response = await pool.query(baseQuery, values);
     console.log("User data successfully updated", response);
   } catch (error) {

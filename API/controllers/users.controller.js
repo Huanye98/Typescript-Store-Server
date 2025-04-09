@@ -91,10 +91,11 @@ const removeProductFromCart = async (req, res, next) => {
 };
 
 const modifyUserData = async (req, res, next) => {
-  const { email, address, password } = req.body;
+  const { email, address, password, name } = req.body;
   const user_id = req.params.id;
+  console.log(name)
   try {
-    await Users.modifyUserDataDB(email, address, password, user_id);
+    await Users.modifyUserDataDB(email, address, password, user_id, name);
     res.status(200).json({ message: "User data modified successfully" });
   } catch (error) {
     next(error);

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "dist",
+        "rootDir": "./",
+        "lib": ["es6", "dom"]
+    },
+    "include": ["**/*.ts"],
+    "exclude": [
+        "node_modules", 
+        "dist",
+        "API/middlewares/cloudinary.middlewares.ts",
+        "API/routes/cloudinary.routes.ts",
+        "Tests/**"
+    ]
+}

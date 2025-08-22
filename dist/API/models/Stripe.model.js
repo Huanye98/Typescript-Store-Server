@@ -8,13 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const db = require("../../db/index");
-const storeTransactionDb = (paymentId, userId, amount, currency, status, clientSecret) => __awaiter(void 0, void 0, void 0, function* () {
+const storeTransactionDb = (transaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const { paymentId, userId, amount, currency, status, clientSecret } = transaction;
     try {
         yield db.query("insert into transactions (payment_id, user_id, amount, currency, status,client_secret) values ($1,$2,$3,$4,$5,$6)", [paymentId, userId, amount, currency, status, clientSecret]);
     }
     catch (error) {
-        throw new Error(`Database Error: failed to store transaction. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to store transaction. ${errorMessage}`);
     }
 });
 const updatePaymentIntentDb = (paymentIntentId, clientSecret) => __awaiter(void 0, void 0, void 0, function* () {
@@ -24,12 +30,16 @@ const updatePaymentIntentDb = (paymentIntentId, clientSecret) => __awaiter(void 
             where payment_id = $1 and client_secret = $2
             returning *`, [paymentIntentId, clientSecret]);
         if (!payment) {
-            return res.status(404).json({ message: "Payment not found" });
+            throw new Error("Payment not found");
         }
     }
     catch (error) {
         console.log("Database error:", error);
-        throw new Error(`Database Error: failed to update payment data. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to update payment data. ${errorMessage}`);
     }
 });
 module.exports = { storeTransactionDb, updatePaymentIntentDb };

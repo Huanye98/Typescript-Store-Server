@@ -1,9 +1,11 @@
-module.exports = (app) => {
-  app.use((req, res, next) => {
+import { Request,Response,NextFunction,Express} from "express";
+
+module.exports = (app: Express) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     res.status(404).json({ message: "This route does not exist" });
   });
 
-  app.use((err, req, res, next) => {
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error("ERROR", req.method, req.path, err);
     if(err.message.includes("Email is already in use")){
       return res.status(409).json({ error: "Internal Server Error" })

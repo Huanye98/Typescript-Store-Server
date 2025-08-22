@@ -9,4 +9,4 @@ router.patch("/:productId", productController.patchProduct)
 
 
 
-module.exports = router
+export default router;

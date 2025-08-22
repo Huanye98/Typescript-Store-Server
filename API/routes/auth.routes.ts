@@ -7,4 +7,4 @@ const {verifyToken, roleValidation} = require("../middlewares/auth.middlewares")
 router.get("/user",verifyToken ,getUserData)
 router.get("/admin",verifyToken,roleValidation("admin"),getAdminData)
 
-module.exports = router
+export default router;

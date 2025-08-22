@@ -1,3 +1,5 @@
+import { Product,Filters,ProductInput,ProductUpdates} from "../../types/Products";
+
 const { query } = require("express");
 const db = require("../../db/index");
 
@@ -8,11 +10,15 @@ const queryAllProducts = async ()=>{
     const response = await db.query(allQuery)
     return response.rows
   } catch (error) {
-    throw new Error(`Database Error:was not able to fetch all products. ${error.message} `)
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error:was not able to fetch all products. ${errorMessage} `)
   }
 }
 
-const getProducts = async (filters = {}) => {
+const getProducts = async (filters :Filters) => {
   //query selectors
   const {
     id,
@@ -100,7 +106,7 @@ const getProducts = async (filters = {}) => {
     const totalCount = parseInt(countResult.rows[0].count, 10);
 
     const products = productRows.rows
-    products.forEach(product=>{
+    products.forEach((product:Product)=>{
       if(product.discountvalue !== 1){
         product.finalPrice = product.price - (product.price*product.discountvalue)
       }else{
@@ -110,30 +116,19 @@ const getProducts = async (filters = {}) => {
 
     return { products, totalCount };
   } catch (error) {
-    throw new Error(`Database Error: Was not able to fetch selected products. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Was not able to fetch selected products. ${errorMessage}`);
   }
 };
 
 const createProduct = async (
-  name,
-  price,
-  description,
-  isavaliable,
-  discountvalue,
-  imageurl,
-  category,
-  collection_id,
-  is_featured,
-  stock
+  product:ProductInput
 ) => {
+const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock } = product;
 
-  console.log(name, price, description,isavaliable,
-    discountvalue,
-    imageurl,
-    category,
-    collection_id,
-    is_featured,
-    stock)
   let query = `insert into products (name, price`;
   const values = [name, price];
 
@@ -177,12 +172,15 @@ const createProduct = async (
     const res = await db.query(query, values);
     return res.rows[0];
   } catch (error) {
-    console.error("Error creating product:", error.message);
-    throw new Error(`Database Error: Failed to create product. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to create product. ${errorMessage}`);
   }
 };
 
-const findAndDeleteProduct = async (id) => {
+const findAndDeleteProduct = async (id:number) => {
   if (!id) {
     throw new Error("Product ID is required for deletion.");
   }
@@ -194,14 +192,17 @@ const findAndDeleteProduct = async (id) => {
     }
     return rows[0];
   } catch (error) {
-    console.error("Error deleting product:", error.message);
-    throw new Error(`Database Error: Failed to delete product. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to delete product. ${errorMessage}`);
   }
 };
 
-const patchProductInDB = async (productId, updates) => {
+const patchProductInDB = async (productId:number, updates:ProductUpdates) => {
   if (!updates || Object.keys(updates).length === 0) {
-    return res.status(400).json({ error: "No updates provided" });
+    throw new Error("No updates provided");
   }
   const sanitizedUpdates = Object.fromEntries(
     Object.entries(updates).map(([key, value]) => [
@@ -224,7 +225,11 @@ const patchProductInDB = async (productId, updates) => {
 
     return { message: "Product updated successfully" };
   } catch (error) {
-    throw new Error(`Database Error: Failed to update product. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to update product. ${errorMessage}`);
   }
 };
 

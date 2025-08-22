@@ -8,11 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { sendVerificationEmailDB, verifyEmailInDb, addEmailToNewsLetter, selectAndSendNewsletter, } = require("../models/email.model");
+Object.defineProperty(exports, "__esModule", { value: true });
+const email_model_1 = require("../models/email.model");
 const sendVerificationEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
-        yield sendVerificationEmailDB(email);
+        yield (0, email_model_1.sendVerificationEmailDB)(email);
         return res.status(200).json({ message: "Verification Email sent" });
     }
     catch (error) {
@@ -22,7 +23,7 @@ const sendVerificationEmail = (req, res, next) => __awaiter(void 0, void 0, void
 const verifyEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
-        yield verifyEmailInDb(token);
+        yield (0, email_model_1.verifyEmailInDb)(token);
         return res.status(200).json({ message: "Email verified" });
     }
     catch (error) {
@@ -32,7 +33,7 @@ const verifyEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
 const subscribeToNewsletter = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email } = req.body;
-        yield addEmailToNewsLetter(email);
+        yield (0, email_model_1.addEmailToNewsLetter)(email);
         return res.status(200).json({ message: "Subscribed to newsletter" });
     }
     catch (error) {
@@ -41,7 +42,7 @@ const subscribeToNewsletter = (req, res, next) => __awaiter(void 0, void 0, void
 });
 const sendNewsletter = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield selectAndSendNewsletter();
+        yield (0, email_model_1.selectAndSendNewsletter)();
         return res.status(200).json({ message: "Newsletter sent" });
     }
     catch (error) {

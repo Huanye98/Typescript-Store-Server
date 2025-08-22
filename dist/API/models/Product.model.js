@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const { query } = require("express");
 const db = require("../../db/index");
 const queryAllProducts = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -17,10 +18,14 @@ const queryAllProducts = () => __awaiter(void 0, void 0, void 0, function* () {
         return response.rows;
     }
     catch (error) {
-        throw new Error(`Database Error:was not able to fetch all products. ${error.message} `);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error:was not able to fetch all products. ${errorMessage} `);
     }
 });
-const getProducts = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (filters = {}) {
+const getProducts = (filters) => __awaiter(void 0, void 0, void 0, function* () {
     //query selectors
     const { id, category, collection, sort, isavaliable, is_featured, page = 1, limit = 10, search, } = filters;
     let baseQuery = ` from products 
@@ -86,7 +91,7 @@ const getProducts = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
         const countResult = yield db.query(countQuery, countValues);
         const totalCount = parseInt(countResult.rows[0].count, 10);
         const products = productRows.rows;
-        products.forEach(product => {
+        products.forEach((product) => {
             if (product.discountvalue !== 1) {
                 product.finalPrice = product.price - (product.price * product.discountvalue);
             }
@@ -97,11 +102,15 @@ const getProducts = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
         return { products, totalCount };
     }
     catch (error) {
-        throw new Error(`Database Error: Was not able to fetch selected products. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Was not able to fetch selected products. ${errorMessage}`);
     }
 });
-const createProduct = (name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock);
+const createProduct = (product) => __awaiter(void 0, void 0, void 0, function* () {
+    const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock } = product;
     let query = `insert into products (name, price`;
     const values = [name, price];
     // Check each filter for inclusion in the query and values
@@ -143,8 +152,11 @@ const createProduct = (name, price, description, isavaliable, discountvalue, ima
         return res.rows[0];
     }
     catch (error) {
-        console.error("Error creating product:", error.message);
-        throw new Error(`Database Error: Failed to create product. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to create product. ${errorMessage}`);
     }
 });
 const findAndDeleteProduct = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -160,13 +172,16 @@ const findAndDeleteProduct = (id) => __awaiter(void 0, void 0, void 0, function*
         return rows[0];
     }
     catch (error) {
-        console.error("Error deleting product:", error.message);
-        throw new Error(`Database Error: Failed to delete product. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to delete product. ${errorMessage}`);
     }
 });
 const patchProductInDB = (productId, updates) => __awaiter(void 0, void 0, void 0, function* () {
     if (!updates || Object.keys(updates).length === 0) {
-        return res.status(400).json({ error: "No updates provided" });
+        throw new Error("No updates provided");
     }
     const sanitizedUpdates = Object.fromEntries(Object.entries(updates).map(([key, value]) => [
         key,
@@ -183,7 +198,11 @@ const patchProductInDB = (productId, updates) => __awaiter(void 0, void 0, void 
         return { message: "Product updated successfully" };
     }
     catch (error) {
-        throw new Error(`Database Error: Failed to update product. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to update product. ${errorMessage}`);
     }
 });
 module.exports = {

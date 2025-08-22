@@ -42,7 +42,11 @@ const sendVerificationEmailDB = (email) => __awaiter(void 0, void 0, void 0, fun
         });
     }
     catch (error) {
-        throw new Error(`Database Error: failed to send verification Email. , ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to send verification Email. , ${errorMessage}`);
     }
 });
 const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* () {
@@ -55,7 +59,11 @@ const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* (
         return result.rows[0];
     }
     catch (error) {
-        throw new Error(`Database Error: failed to verify email. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = "Invalid or expired token";
+        }
+        throw new Error(`Database Error: failed to verify email. ${errorMessage}`);
     }
 });
 const addEmailToNewsLetter = (email) => __awaiter(void 0, void 0, void 0, function* () {
@@ -64,7 +72,11 @@ const addEmailToNewsLetter = (email) => __awaiter(void 0, void 0, void 0, functi
         yield pool.query(query, [email]);
     }
     catch (error) {
-        throw new Error(`Database Error: failed to add email to newsletter. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to add email to newsletter. ${errorMessage}`);
     }
 });
 // como elegir mails personalizados
@@ -82,7 +94,11 @@ const selectAndSendNewsletter = () => __awaiter(void 0, void 0, void 0, function
         })));
     }
     catch (error) {
-        throw new Error(`Database Error: failed to send newsletter. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to send newsletter. ${errorMessage}`);
     }
 });
 module.exports = {

@@ -3,7 +3,7 @@ const transporter = require("../../transporter/index");
 const fs = require("fs");
 const path = require("path");
 
-const sendVerificationEmailDB = async (email) => {
+const sendVerificationEmailDB = async (email:string) => {
   try {
     const isEmailRegistered = await pool.query(
       "SELECT * FROM users WHERE email = $1",
@@ -52,13 +52,17 @@ const sendVerificationEmailDB = async (email) => {
     });
 
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: failed to send verification Email. , ${error.message}`
+      `Database Error: failed to send verification Email. , ${errorMessage}`
     );
   }
 };
 
-const verifyEmailInDb = async (token) => {
+const verifyEmailInDb = async (token:string) => {
   try {
     const query =
       "update users set is_verified = true from email_tokens where users.id = email_tokens.user_id and email_tokens.token = $1 and expires_at > NOW() returning users.*";
@@ -69,18 +73,26 @@ const verifyEmailInDb = async (token) => {
     }
     return result.rows[0];
   } catch (error) {
-    throw new Error(`Database Error: failed to verify email. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = "Invalid or expired token";
+    }
+    throw new Error(`Database Error: failed to verify email. ${errorMessage}`);
   }
 };
 
-const addEmailToNewsLetter = async (email) => {
+const addEmailToNewsLetter = async (email:string) => {
   try {
     const query =
       "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsusbribed = false";
     await pool.query(query, [email]);
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: failed to add email to newsletter. ${error.message}`
+      `Database Error: failed to add email to newsletter. ${errorMessage}`
     );
   }
 };
@@ -92,7 +104,7 @@ const selectAndSendNewsletter = async () => {
       "select * from newsletter_subscriptions where unsubscribed = false";
     const subscribedEmails = await pool.query(query);
     await Promise.all(
-      subscribedEmails.rows.forEach(async (email) => {
+      subscribedEmails.rows.forEach(async (email:string) => {
         await transporter.sendMail({
           from: process.env.NOREPLYEMAIL,
           to: email,
@@ -102,8 +114,12 @@ const selectAndSendNewsletter = async () => {
       })
     );
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: failed to send newsletter. ${error.message}`
+      `Database Error: failed to send newsletter. ${errorMessage}`
     );
   }
 };

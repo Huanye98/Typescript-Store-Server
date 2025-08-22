@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const router = express.Router();
 const usersController = require("../controllers/users.controller");
@@ -24,4 +25,4 @@ router.patch("/modify/:id", usersController.modifyUserData);
 router.delete("/:id", verifyToken, usersController.deleteUser);
 //empty cart
 router.delete("/cart/:cart_id", usersController.emptyCart);
-module.exports = router;
+exports.default = router;

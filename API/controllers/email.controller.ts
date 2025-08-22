@@ -1,11 +1,10 @@
-const {
-  sendVerificationEmailDB,
+import {Request,Response, NextFunction } from "express";
+import {sendVerificationEmailDB,
   verifyEmailInDb,
   addEmailToNewsLetter,
-  selectAndSendNewsletter,
-} = require("../models/email.model");
+  selectAndSendNewsletter} from "../models/email.model";
 
-const sendVerificationEmail = async (req, res, next) => {
+const sendVerificationEmail = async (req:Request, res:Response, next:NextFunction) => {
   try {
     const { email } = req.body;
      await sendVerificationEmailDB(email);
@@ -15,7 +14,7 @@ const sendVerificationEmail = async (req, res, next) => {
   }
 };
 
-const verifyEmail = async (req, res, next) => {
+const verifyEmail = async (req:Request, res:Response, next:NextFunction) => {
   try {
     const { token } = req.query;
     await verifyEmailInDb(token);
@@ -25,7 +24,7 @@ const verifyEmail = async (req, res, next) => {
   }
 };
 
-const subscribeToNewsletter = async (req, res, next) => {
+const subscribeToNewsletter = async (req:Request, res:Response, next:NextFunction) => {
   try {
     const { email } = req.body;
     await addEmailToNewsLetter(email);
@@ -34,7 +33,7 @@ const subscribeToNewsletter = async (req, res, next) => {
     next(error);
   }
 };
-const sendNewsletter = async (req, res, next) => {
+const sendNewsletter = async (req:Request, res:Response, next:NextFunction) => {
   try {
     await selectAndSendNewsletter();
     return res.status(200).json({ message: "Newsletter sent" });

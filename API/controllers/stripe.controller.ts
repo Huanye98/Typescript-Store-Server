@@ -1,10 +1,10 @@
+import { Request,Response,NextFunction } from "express";
 const {
   storeTransactionDb,
   updatePaymentIntentDb,
 } = require("../models/Stripe.model");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-const paymentIntent = async (req, res, next) => {
+const paymentIntent = async (req:Request, res:Response, next:NextFunction) => {
   const { amount, currency, userId } = req.body;
 
   try {
@@ -13,16 +13,17 @@ const paymentIntent = async (req, res, next) => {
       currency,
       metadata: { userId },
     });
-    console.log(paymentIntent)
-    await storeTransactionDb(
-      paymentIntent.id,
+
+    const transactionData = {
+      paymentId: paymentIntent.id,
       userId,
       amount,
       currency,
-      "incomplete",
-      paymentIntent.client_secret
-    );
+      status: "incomplete",
+      clientSecret: paymentIntent.client_secret
+    }
 
+    await storeTransactionDb(transactionData);
     res.status(200).json({
       message: "good payment intent",
       clientSecret: paymentIntent.client_secret,
@@ -32,9 +33,8 @@ const paymentIntent = async (req, res, next) => {
   }
 };
 
-const updatePaymentIntent = async (req, res, next) => {
+const updatePaymentIntent = async (req:Request, res:Response, next:NextFunction) => {
   const { clientSecret, paymentIntentId } = req.body;
-
   try {
     await updatePaymentIntentDb( paymentIntentId, clientSecret,);
     res.status(200).json({ message: "Payment status updated successfully" });

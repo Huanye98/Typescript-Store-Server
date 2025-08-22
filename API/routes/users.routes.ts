@@ -29,4 +29,4 @@ router.delete("/:id", verifyToken, usersController.deleteUser)
 router.delete("/cart/:cart_id", usersController.emptyCart)
 
 
-module.exports = router
+export default router;

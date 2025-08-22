@@ -1,4 +1,5 @@
-const getUserData = async (req, res, next) => {
+import { Request, Response, NextFunction } from 'express';
+const getUserData = async (req:Request, res:Response, next:NextFunction) => {
   try {
     res.status(200).json({
         message:"User data retrieved",
@@ -8,7 +9,7 @@ const getUserData = async (req, res, next) => {
     next(error);
   }
 };
-const getAdminData = async (req, res, next) => {
+const getAdminData = async (req:Request, res:Response, next:NextFunction) => {
   try {
     res.status(200).json({
         message:"Admin data retrieved",

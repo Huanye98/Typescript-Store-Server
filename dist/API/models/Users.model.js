@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const pool = require("../../db/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
@@ -18,7 +19,11 @@ const checkIfEmailIsUsed = (email) => __awaiter(void 0, void 0, void 0, function
         return response.rows.length > 0;
     }
     catch (error) {
-        throw new Error(`Database Error: Failed to check email. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to check email. ${errorMessage}`);
     }
 });
 const createUser = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
@@ -45,7 +50,11 @@ const createUser = (email, password) => __awaiter(void 0, void 0, void 0, functi
         return userRes.rows[0];
     }
     catch (error) {
-        throw new Error(`Database Error: Failed to create user. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to create user. ${errorMessage}`);
     }
 });
 const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -75,7 +84,11 @@ const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
         return response.rows;
     }
     catch (error) {
-        throw new Error(`Database Error: Failed to query users. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed to query users. ${errorMessage}`);
     }
 });
 const login = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
@@ -88,9 +101,7 @@ const login = (email, password) => __awaiter(void 0, void 0, void 0, function* (
             throw new Error("invalid email");
         }
         if (user.is_verified === false) {
-            const error = new Error("Email not verified");
-            error.status = 401;
-            throw error;
+            throw new Error("Email not verified");
         }
         const isPasswordValid = yield bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
@@ -108,10 +119,15 @@ const login = (email, password) => __awaiter(void 0, void 0, void 0, function* (
         };
     }
     catch (error) {
-        throw new Error(`Authentication Error: ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Authentication Error: ${errorMessage}`);
     }
 });
-const addProductToUserCartDb = (product_id, quantity, user_id, cart_id) => __awaiter(void 0, void 0, void 0, function* () {
+const addProductToUserCartDb = (cartData) => __awaiter(void 0, void 0, void 0, function* () {
+    const { product_id, quantity, user_id, cart_id } = cartData;
     if (!product_id) {
         return { message: "Missing required field: productId" };
     }
@@ -148,22 +164,22 @@ const addProductToUserCartDb = (product_id, quantity, user_id, cart_id) => __awa
         }
     }
     catch (error) {
-        throw new Error(`Database Error: Failed add product to cart: ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Failed add product to cart: ${errorMessage}`);
     }
 });
 const removeProductFromUserCartDb = (product_id, quantity, user_id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!product_id) {
-        return res
-            .status(400)
-            .json({ message: "Missing required field: productId" });
+        throw new Error("Missing required field: productId");
     }
     if (!quantity) {
-        return res
-            .status(400)
-            .json({ message: "Missing required field: quantity" });
+        throw new Error("Missing required field: quantity");
     }
     if (!user_id) {
-        return res.status(400).json({ message: "Missing required field: userId" });
+        throw new Error("Missing required field: userId");
     }
     const userCheckQuery = "SELECT * FROM users WHERE id = $1";
     const userResponse = yield pool.query(userCheckQuery, [user_id]);
@@ -200,7 +216,11 @@ const removeProductFromUserCartDb = (product_id, quantity, user_id) => __awaiter
         }
     }
     catch (error) {
-        throw new Error(`Database Error: failed to remove from cart ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: failed to remove from cart ${errorMessage}`);
     }
 });
 const modifyUserDataDB = (email, address, password, user_id, name) => __awaiter(void 0, void 0, void 0, function* () {
@@ -232,7 +252,11 @@ const modifyUserDataDB = (email, address, password, user_id, name) => __awaiter(
         console.log("User data successfully updated", response);
     }
     catch (error) {
-        throw new Error(`Database Error: Was not able to modify user. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Was not able to modify user. ${errorMessage}`);
     }
 });
 const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -241,7 +265,11 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         return result.rows[0];
     }
     catch (error) {
-        throw new Error(`Database Error: was not able to get selected user. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: was not able to get selected user. ${errorMessage}`);
     }
 });
 const deleteUserFromDB = (user_id, cart_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -253,7 +281,11 @@ const deleteUserFromDB = (user_id, cart_id) => __awaiter(void 0, void 0, void 0,
         return response.rows[0];
     }
     catch (error) {
-        throw new Error(`Database Error: was not able to delete user ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: was not able to delete user ${errorMessage}`);
     }
 });
 const userGetTheirData = (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -297,7 +329,11 @@ const userGetTheirData = (id) => __awaiter(void 0, void 0, void 0, function* () 
         return response.rows;
     }
     catch (error) {
-        throw new Error(`Database Error: Could not retrieve user data. ${error.message}`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: Could not retrieve user data. ${errorMessage}`);
     }
 });
 const emptyCartFromDb = (cart_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -309,7 +345,11 @@ const emptyCartFromDb = (cart_id) => __awaiter(void 0, void 0, void 0, function*
         yield pool.query(query, [cart_id]);
     }
     catch (error) {
-        throw new Error(`Database Error: was not able to empty cart`);
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        throw new Error(`Database Error: was not able to empty cart. ${errorMessage}`);
     }
 });
 module.exports = {

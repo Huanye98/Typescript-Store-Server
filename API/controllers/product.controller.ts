@@ -1,6 +1,7 @@
 const Product = require("../models/Product.model");
+import { Request, Response, NextFunction } from 'express';
 
-const getAllProducts = async (req,res,next)=>{
+const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const products = await Product.queryAllProducts()
     res.status(200).json(products)
@@ -9,7 +10,7 @@ const getAllProducts = async (req,res,next)=>{
   }
 }
 
-const getProducts = async (req, res, next) => {
+const getProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const filters = req.query;
     const products = await Product.getProducts(filters);
@@ -18,7 +19,7 @@ const getProducts = async (req, res, next) => {
     next(error);
   }
 };
-const createProduct = async (req, res, next) => {
+const createProduct = async (req: Request, res: Response, next: NextFunction) => {
   const {
     name,
     price,
@@ -50,7 +51,7 @@ const createProduct = async (req, res, next) => {
   }
 };
 
-const deleteProduct = async (req, res, next) => {
+const deleteProduct = async (req: Request, res: Response, next: NextFunction) => {
   const productId = req.params.productId;
   if (!productId) {
     return res.status(400).json({ message: "productId is required" });
@@ -66,7 +67,7 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
-const patchProduct = async (req, res, next) => {
+const patchProduct = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const payload = req.body;
     const { productId } = req.params;

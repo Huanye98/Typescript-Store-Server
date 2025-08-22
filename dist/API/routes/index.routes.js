@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const router = require("express").Router();
 router.get("/", (req, res, next) => {
     res.json("All good in here");
@@ -13,4 +14,4 @@ const stripeRouter = require("./stripe.routes");
 router.use("/payment", stripeRouter);
 const cloudinaryRouter = require("./cloudinary.routes");
 router.use("/upload", cloudinaryRouter);
-module.exports = router;
+exports.default = router;

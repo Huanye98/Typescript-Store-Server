@@ -1,18 +1,25 @@
+import {cartData,CartItem} from "../../types/Users";
+
 const pool = require("../../db/index");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const checkIfEmailIsUsed = async (email) => {
+
+const checkIfEmailIsUsed = async (email:string) => {
   try {
     const query = "select * from users where email = $1";
     const response = await pool.query(query, [email]);
     return response.rows.length > 0;
   } catch (error) {
-    throw new Error(`Database Error: Failed to check email. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to check email. ${errorMessage}`);
   }
 };
 
 
-const createUser = async (email, password) => {
+const createUser = async (email:string, password:string) => {
   try {
     if (!email || !password) {
       throw new Error("Email and password are obligatory");
@@ -47,7 +54,11 @@ const createUser = async (email, password) => {
     ]);
     return userRes.rows[0];
   } catch (error) {
-    throw new Error(`Database Error: Failed to create user. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to create user. ${errorMessage}`);
   }
 };
 
@@ -78,11 +89,15 @@ const getAllUsers = async () => {
     const response = await pool.query(query);
     return response.rows;
   } catch (error) {
-    throw new Error(`Database Error: Failed to query users. ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: Failed to query users. ${errorMessage}`);
   }
 };
 
-const login = async (email, password) => {
+const login = async (email:string, password:string) => {
   try {
     const res = await pool.query(" select * from users where email = $1 ", [
       email,
@@ -94,9 +109,7 @@ const login = async (email, password) => {
     }
     
     if(user.is_verified === false) {
-      const error = new Error("Email not verified");
-      error.status = 401;
-      throw error;
+       throw new Error("Email not verified");
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -118,16 +131,18 @@ const login = async (email, password) => {
       },
     };
   } catch (error) {
-    throw new Error(`Authentication Error: ${error.message}`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Authentication Error: ${errorMessage}`);
   }
 };
 
 const addProductToUserCartDb = async (
-  product_id,
-  quantity,
-  user_id,
-  cart_id
+  cartData: cartData
 ) => {
+  const { product_id, quantity, user_id, cart_id } = cartData;
   if (!product_id) {
     return { message: "Missing required field: productId" };
   }
@@ -167,24 +182,24 @@ const addProductToUserCartDb = async (
       console.log("Product successfully added in the cart");
     }
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: Failed add product to cart: ${error.message}`
+      `Database Error: Failed add product to cart: ${errorMessage}`
     );
   }
 };
-const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
+const removeProductFromUserCartDb = async (product_id:number, quantity:number, user_id:number) => {
   if (!product_id) {
-    return res
-      .status(400)
-      .json({ message: "Missing required field: productId" });
+    throw new Error( "Missing required field: productId" );
   }
   if (!quantity) {
-    return res
-      .status(400)
-      .json({ message: "Missing required field: quantity" });
+     throw new Error( "Missing required field: quantity"  );
   }
   if (!user_id) {
-    return res.status(400).json({ message: "Missing required field: userId" });
+    throw new Error( "Missing required field: userId" );
   }
   const userCheckQuery = "SELECT * FROM users WHERE id = $1";
   const userResponse = await pool.query(userCheckQuery, [user_id]);
@@ -224,13 +239,17 @@ const removeProductFromUserCartDb = async (product_id, quantity, user_id) => {
       console.log("Product not found in cart");
     }
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: failed to remove from cart ${error.message}`
+      `Database Error: failed to remove from cart ${errorMessage}`
     );
   }
 };
 
-const modifyUserDataDB = async (email, address, password, user_id, name) => {
+const modifyUserDataDB = async (email:string, address:string, password:string, user_id:number, name:string) => {
   try {
     let baseQuery = "UPDATE users SET ";
     let values = [];
@@ -260,23 +279,31 @@ const modifyUserDataDB = async (email, address, password, user_id, name) => {
     const response = await pool.query(baseQuery, values);
     console.log("User data successfully updated", response);
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: Was not able to modify user. ${error.message}`
+      `Database Error: Was not able to modify user. ${errorMessage}`
     );
   }
 };
 
-const getUserById = async (id) => {
+const getUserById = async (id:number) => {
   try {
     const result = await pool.query("SELECT * FROM Users WHERE id = $1", [id]);
     return result.rows[0];
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: was not able to get selected user. ${error.message}`
+      `Database Error: was not able to get selected user. ${errorMessage}`
     );
   }
 };
-const deleteUserFromDB = async (user_id,cart_id) => {
+const deleteUserFromDB = async (user_id:number,cart_id:number) => {
   try {
     const query = `delete from users where id = $1;`;
     const query2 = `delete from cart where id = $1;`;
@@ -284,13 +311,17 @@ const deleteUserFromDB = async (user_id,cart_id) => {
     await pool.query(query2, [cart_id]);
     return response.rows[0];
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: was not able to delete user ${error.message}`
+      `Database Error: was not able to delete user ${errorMessage}`
     );
   }
 };
 
-const userGetTheirData = async (id) => {
+const userGetTheirData = async (id:number) => {
   try {
     const query = `
     SELECT 
@@ -332,13 +363,17 @@ const userGetTheirData = async (id) => {
 
     return response.rows;
   } catch (error) {
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     throw new Error(
-      `Database Error: Could not retrieve user data. ${error.message}`
+      `Database Error: Could not retrieve user data. ${errorMessage}`
     );
   }
 };
 
-const emptyCartFromDb = async (cart_id) => {
+const emptyCartFromDb = async (cart_id:number) => {
   if (!cart_id) {
     throw new Error("No cart_id");
   }
@@ -346,7 +381,11 @@ const emptyCartFromDb = async (cart_id) => {
     const query = "Delete from cart_items where cart_id = $1";
     await pool.query(query, [cart_id]);
   } catch (error) {
-    throw new Error(`Database Error: was not able to empty cart`);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(`Database Error: was not able to empty cart. ${errorMessage}`);
   }
 };
 

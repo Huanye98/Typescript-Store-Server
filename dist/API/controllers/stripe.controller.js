@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const { storeTransactionDb, updatePaymentIntentDb, } = require("../models/Stripe.model");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const paymentIntent = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -18,8 +19,15 @@ const paymentIntent = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             currency,
             metadata: { userId },
         });
-        console.log(paymentIntent);
-        yield storeTransactionDb(paymentIntent.id, userId, amount, currency, "incomplete", paymentIntent.client_secret);
+        const transactionData = {
+            paymentId: paymentIntent.id,
+            userId,
+            amount,
+            currency,
+            status: "incomplete",
+            clientSecret: paymentIntent.client_secret
+        };
+        yield storeTransactionDb(transactionData);
         res.status(200).json({
             message: "good payment intent",
             clientSecret: paymentIntent.client_secret,

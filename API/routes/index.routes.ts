@@ -1,6 +1,7 @@
+import { Request,Response,NextFunction } from "express";
 const router = require("express").Router();
 
-router.get("/", (req, res, next) => {
+router.get("/", (req: Request, res: Response, next: NextFunction) => {
   res.json("All good in here");
 });
 
@@ -20,4 +21,4 @@ router.use("/payment", stripeRouter)
 const cloudinaryRouter = require("./cloudinary.routes")
 router.use("/upload",cloudinaryRouter)
 
-module.exports = router;
+export default router;

@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAdminData = exports.getUserData = void 0;
 const getUserData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         res.status(200).json({
@@ -20,15 +21,16 @@ const getUserData = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         next(error);
     }
 });
+exports.getUserData = getUserData;
 const getAdminData = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         res.status(200).json({
             message: "Admin data retrieved",
-            user: req.payload,
+            user: req.user,
         });
     }
     catch (error) {
         next(error);
     }
 });
-module.exports = { getUserData, getAdminData };
+exports.getAdminData = getAdminData;

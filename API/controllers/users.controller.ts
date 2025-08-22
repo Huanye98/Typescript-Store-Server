@@ -1,6 +1,7 @@
+import { Request,Response,NextFunction } from "express";
 const Users = require("../models/Users.model");
 
-const getAllUsers = async (req, res, next) => {
+const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const allUsers = await Users.getAllUsers();
     res.status(200).json(allUsers);
@@ -8,7 +9,7 @@ const getAllUsers = async (req, res, next) => {
     next(error);
   }
 };
-const createUser = async (req, res, next) => {
+const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   try {
     const newUser = await Users.createUser(email, password);
@@ -18,7 +19,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
-const login = async (req, res, next) => {
+const login = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password, role } = req.body;
   try {
     const { token, user } = await Users.login(email, password, role);
@@ -28,7 +29,7 @@ const login = async (req, res, next) => {
   }
 };
 
-const addProductToCart = async (req, res, next) => {
+const addProductToCart = async (req: Request, res: Response, next: NextFunction) => {
   const { product_id, quantity, user_id, cart_id } = req.body;
   console.log(req.body);
   if (!product_id) {
@@ -61,7 +62,7 @@ const addProductToCart = async (req, res, next) => {
   }
 };
 
-const removeProductFromCart = async (req, res, next) => {
+const removeProductFromCart = async (req: Request, res: Response, next: NextFunction) => {
   const { product_id, quantity, user_id } = req.body;
 
   if (!product_id) {
@@ -90,7 +91,7 @@ const removeProductFromCart = async (req, res, next) => {
   }
 };
 
-const modifyUserData = async (req, res, next) => {
+const modifyUserData = async (req: Request, res: Response, next: NextFunction) => {
   const { email, address, password, name } = req.body;
   const user_id = req.params.id;
   console.log(name)
@@ -102,8 +103,11 @@ const modifyUserData = async (req, res, next) => {
   }
 };
 
-const deleteUser = async (req, res, next) => {
+const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  if(req.user===undefined){
+    return res.status(401).json({ errorMessage: "Unauthorized" });
+  }
   const userId = req.user.userId;
   const cart_id = req.user.cartId;
   const userRole = req.user.role;
@@ -132,7 +136,7 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-const userGetsData = async (req, res, next) => {
+const userGetsData = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   try {
     const response = await Users.userGetTheirData(id);
@@ -143,7 +147,7 @@ const userGetsData = async (req, res, next) => {
     next(error);
   }
 };
-const emptyCart = async (req, res, next) => {
+const emptyCart = async (req: Request, res: Response, next: NextFunction) => {
   const { cart_id } = req.params;
   try {
     await Users.emptyCartFromDb(cart_id);

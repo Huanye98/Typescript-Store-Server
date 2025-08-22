@@ -17,6 +17,9 @@ const sendVerificationEmail = async (req:Request, res:Response, next:NextFunctio
 const verifyEmail = async (req:Request, res:Response, next:NextFunction) => {
   try {
     const { token } = req.query;
+    if(!token || typeof token !== 'string') {
+      return res.status(400).json({ message: "Invalid token" });
+    }
     await verifyEmailInDb(token);
     return res.status(200).json({ message: "Email verified" });
   } catch (error) {

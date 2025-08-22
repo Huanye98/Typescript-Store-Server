@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Users = require("../models/Users.model");
 const getAllUsers = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -102,6 +103,9 @@ const modifyUserData = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
 });
 const deleteUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
+    if (req.user === undefined) {
+        return res.status(401).json({ errorMessage: "Unauthorized" });
+    }
     const userId = req.user.userId;
     const cart_id = req.user.cartId;
     const userRole = req.user.role;

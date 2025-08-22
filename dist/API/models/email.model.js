@@ -8,6 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.selectAndSendNewsletter = exports.addEmailToNewsLetter = exports.verifyEmailInDb = exports.sendVerificationEmailDB = void 0;
 const pool = require("../../db/index");
 const transporter = require("../../transporter/index");
 const fs = require("fs");
@@ -49,6 +51,7 @@ const sendVerificationEmailDB = (email) => __awaiter(void 0, void 0, void 0, fun
         throw new Error(`Database Error: failed to send verification Email. , ${errorMessage}`);
     }
 });
+exports.sendVerificationEmailDB = sendVerificationEmailDB;
 const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = "update users set is_verified = true from email_tokens where users.id = email_tokens.user_id and email_tokens.token = $1 and expires_at > NOW() returning users.*";
@@ -66,6 +69,7 @@ const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* (
         throw new Error(`Database Error: failed to verify email. ${errorMessage}`);
     }
 });
+exports.verifyEmailInDb = verifyEmailInDb;
 const addEmailToNewsLetter = (email) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsusbribed = false";
@@ -79,6 +83,7 @@ const addEmailToNewsLetter = (email) => __awaiter(void 0, void 0, void 0, functi
         throw new Error(`Database Error: failed to add email to newsletter. ${errorMessage}`);
     }
 });
+exports.addEmailToNewsLetter = addEmailToNewsLetter;
 // como elegir mails personalizados
 const selectAndSendNewsletter = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -101,9 +106,4 @@ const selectAndSendNewsletter = () => __awaiter(void 0, void 0, void 0, function
         throw new Error(`Database Error: failed to send newsletter. ${errorMessage}`);
     }
 });
-module.exports = {
-    sendVerificationEmailDB,
-    verifyEmailInDb,
-    addEmailToNewsLetter,
-    selectAndSendNewsletter,
-};
+exports.selectAndSendNewsletter = selectAndSendNewsletter;

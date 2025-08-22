@@ -3,7 +3,7 @@ const transporter = require("../../transporter/index");
 const fs = require("fs");
 const path = require("path");
 
-const sendVerificationEmailDB = async (email:string) => {
+export const sendVerificationEmailDB = async (email:string) => {
   try {
     const isEmailRegistered = await pool.query(
       "SELECT * FROM users WHERE email = $1",
@@ -62,7 +62,7 @@ const sendVerificationEmailDB = async (email:string) => {
   }
 };
 
-const verifyEmailInDb = async (token:string) => {
+export const verifyEmailInDb = async (token:string) => {
   try {
     const query =
       "update users set is_verified = true from email_tokens where users.id = email_tokens.user_id and email_tokens.token = $1 and expires_at > NOW() returning users.*";
@@ -81,7 +81,7 @@ const verifyEmailInDb = async (token:string) => {
   }
 };
 
-const addEmailToNewsLetter = async (email:string) => {
+export const addEmailToNewsLetter = async (email:string) => {
   try {
     const query =
       "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsusbribed = false";
@@ -98,7 +98,7 @@ const addEmailToNewsLetter = async (email:string) => {
 };
 
 // como elegir mails personalizados
-const selectAndSendNewsletter = async () => {
+export const selectAndSendNewsletter = async () => {
   try {
     const query =
       "select * from newsletter_subscriptions where unsubscribed = false";
@@ -124,9 +124,3 @@ const selectAndSendNewsletter = async () => {
   }
 };
 
-module.exports = {
-  sendVerificationEmailDB,
-  verifyEmailInDb,
-  addEmailToNewsLetter,
-  selectAndSendNewsletter,
-};

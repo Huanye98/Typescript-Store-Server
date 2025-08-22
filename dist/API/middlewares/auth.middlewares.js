@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.verifyToken = verifyToken;
+exports.roleValidation = roleValidation;
 const jwt = require("jsonwebtoken");
 function verifyToken(req, res, next) {
     try {
@@ -17,12 +20,13 @@ function verifyToken(req, res, next) {
 }
 function roleValidation(requiredRole) {
     return (req, res, next) => {
-        if (!req.user) {
+        const user = req.user;
+        if (!user) {
             return res
                 .status(401)
                 .json({ errorMessage: "no req.user" });
         }
-        if (req.user.role !== requiredRole) {
+        if ((user === null || user === void 0 ? void 0 : user.role) !== requiredRole) {
             return res
                 .status(401)
                 .json({ errorMessage: "Access denied, not enough clearance" });
@@ -30,4 +34,3 @@ function roleValidation(requiredRole) {
         next();
     };
 }
-module.exports = { verifyToken, roleValidation };

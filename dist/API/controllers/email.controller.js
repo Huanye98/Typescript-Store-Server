@@ -23,6 +23,9 @@ const sendVerificationEmail = (req, res, next) => __awaiter(void 0, void 0, void
 const verifyEmail = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.query;
+        if (!token || typeof token !== 'string') {
+            return res.status(400).json({ message: "Invalid token" });
+        }
         yield (0, email_model_1.verifyEmailInDb)(token);
         return res.status(200).json({ message: "Email verified" });
     }

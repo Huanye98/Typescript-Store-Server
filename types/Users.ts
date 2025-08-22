@@ -27,3 +27,8 @@ export interface Transaction{
   status: string,
   clientSecret: string
 }
+export interface User {
+  userId: number;
+  role: "admin" | "user";
+  cartId?: number;
+}

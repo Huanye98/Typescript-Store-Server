@@ -1,6 +1,8 @@
+import { Request,Response,NextFunction } from "express";
 const jwt = require("jsonwebtoken");
+import {User} from "../../types/Users"
 
-function verifyToken(req, res, next) {
+export function verifyToken(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -8,7 +10,7 @@ function verifyToken(req, res, next) {
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as User;
     req.user = decoded;
     next();
   } catch (error) {
@@ -16,15 +18,16 @@ function verifyToken(req, res, next) {
   }
 }
 
-function roleValidation(requiredRole) {
-  return (req, res, next) => {
-    if(!req.user){
+export function roleValidation(requiredRole: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user as User;
+    if(!user){
         return res
         .status(401)
         .json({ errorMessage: "no req.user" });
     }
     
-    if ( req.user.role !== requiredRole) {
+    if ( user?.role !== requiredRole) {
       return res
         .status(401)
         .json({ errorMessage: "Access denied, not enough clearance" });
@@ -34,4 +37,3 @@ function roleValidation(requiredRole) {
   };
 }
 
-module.exports = { verifyToken, roleValidation };

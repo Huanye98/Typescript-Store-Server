@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "build": "tsc",
     "start": "nodemon dist/server.js",
     "dev": "nodemon --exec ts-node server.ts"
   },

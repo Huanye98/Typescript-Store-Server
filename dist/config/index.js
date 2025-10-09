@@ -11,7 +11,8 @@ const FRONTEND_URL = process.env.ORIGIN || "https://canvasandchaos.netlify.app";
 module.exports = (app) => {
     app.set("trust proxy", 1);
     app.use(cors({
-        origin: [FRONTEND_URL],
+        origin: FRONTEND_URL,
+        credentials: true
     }));
     app.use(logger("dev"));
     app.use(express_1.default.json());

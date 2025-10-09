@@ -7,10 +7,10 @@ const pg_1 = require("pg");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const db = new pg_1.Client({
-    // connectionString: process.env.DATABASE_URL,
-    // ssl:{
-    //   rejectUnauthorized: false
-    // },
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    },
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,

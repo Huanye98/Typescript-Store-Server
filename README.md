@@ -1,7 +1,9 @@
 # Canvas&Chaos
 
 ## [See the App!] https://canvasandchaos.netlify.app/
-
+##
+>
+> ** Advanced and experimental version of this project at: https://github.com/Huanye98/TypeScript-Store-Server-V2**
 ## Description
 
 The page is part of a full-stack web application built with a TypeScript React front-end, an Express back-end, and a PostgreSQL database. The interface uses Material-UI (MUI) for a polished, responsive, and modern design.

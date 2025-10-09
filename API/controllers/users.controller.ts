@@ -41,7 +41,6 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 const addProductToCart = async (req: Request, res: Response, next: NextFunction) => {
   const cartData = req.body;
-  console.log(req.body);
   if (!cartData.product_id) {
     return res
       .status(400)
@@ -99,7 +98,6 @@ const removeProductFromCart = async (req: Request, res: Response, next: NextFunc
 const modifyUserData = async (req: Request, res: Response, next: NextFunction) => {
   const { email, address, password, name } = req.body;
   const user_id = req.params.id;
-  console.log(name)
   try {
     await Users.modifyUserDataDB(email, address, password, user_id, name);
     res.status(200).json({ message: "User data modified successfully" });

@@ -34,7 +34,6 @@ const updatePaymentIntentDb = async (
       throw new Error("Payment not found");
     }
   } catch (error) {
-    console.log("Database error:", error);
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;

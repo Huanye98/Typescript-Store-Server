@@ -143,7 +143,6 @@ const createProduct = async (product: ProductInput) => {
     is_featured,
     stock,
   } = product;
-  console.log(product);
   if(!name || price===undefined || price===null){
     throw new Error("Name and price are required");
   }

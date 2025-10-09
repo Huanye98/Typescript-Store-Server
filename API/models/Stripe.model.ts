@@ -1,6 +1,5 @@
 import { Transaction } from "../../types/Users";
-const db = require("../../db/index");
-
+import db from "../../db"
 const storeTransactionDb = async (transaction: Transaction) => {
   const { paymentId, userId, amount, currency, status, clientSecret } = transaction;
   try {

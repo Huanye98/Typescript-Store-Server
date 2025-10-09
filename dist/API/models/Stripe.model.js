@@ -8,12 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const db = require("../../db/index");
+const db_1 = __importDefault(require("../../db"));
 const storeTransactionDb = (transaction) => __awaiter(void 0, void 0, void 0, function* () {
     const { paymentId, userId, amount, currency, status, clientSecret } = transaction;
     try {
-        yield db.query("insert into transactions (payment_id, user_id, amount, currency, status,client_secret) values ($1,$2,$3,$4,$5,$6)", [paymentId, userId, amount, currency, status, clientSecret]);
+        yield db_1.default.query("insert into transactions (payment_id, user_id, amount, currency, status,client_secret) values ($1,$2,$3,$4,$5,$6)", [paymentId, userId, amount, currency, status, clientSecret]);
     }
     catch (error) {
         let errorMessage = "Unknown error";
@@ -25,7 +28,7 @@ const storeTransactionDb = (transaction) => __awaiter(void 0, void 0, void 0, fu
 });
 const updatePaymentIntentDb = (paymentIntentId, clientSecret) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const payment = yield db.query(`update transactions
+        const payment = yield db_1.default.query(`update transactions
             set status = 'complete' 
             where payment_id = $1 and client_secret = $2
             returning *`, [paymentIntentId, clientSecret]);

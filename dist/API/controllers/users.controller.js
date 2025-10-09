@@ -40,26 +40,26 @@ const login = (req, res, next) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 const addProductToCart = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { product_id, quantity, user_id, cart_id } = req.body;
+    const cartData = req.body;
     console.log(req.body);
-    if (!product_id) {
+    if (!cartData.product_id) {
         return res
             .status(400)
             .json({ message: "Missing required field: productId" });
     }
-    if (!quantity) {
+    if (!cartData.quantity) {
         return res
             .status(400)
             .json({ message: "Missing required field: quantity" });
     }
-    if (!user_id) {
+    if (!cartData.user_id) {
         return res.status(400).json({ message: "Missing required field: userId" });
     }
-    if (!cart_id) {
+    if (!cartData.cart_id) {
         return res.status(400).json({ message: "Missing required field: cart_id" });
     }
     try {
-        const response = yield Users.addProductToUserCartDb(product_id, quantity, user_id, cart_id);
+        const response = yield Users.addProductToUserCartDb(cartData);
         res.status(200).json({ message: "product added successfully", response });
     }
     catch (error) {
@@ -103,7 +103,7 @@ const modifyUserData = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
 });
 const deleteUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    if (req.user === undefined) {
+    if (!req.user) {
         return res.status(401).json({ errorMessage: "Unauthorized" });
     }
     const userId = req.user.userId;

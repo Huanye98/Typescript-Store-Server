@@ -10,6 +10,7 @@ export interface Product {
   collection_id: number;
   is_featured: boolean;
   stock: number;
+  finalPrice?: number;
 }
 export interface Filters {
   id?: number;

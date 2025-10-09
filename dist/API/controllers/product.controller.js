@@ -30,9 +30,9 @@ const getProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 const createProduct = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock, } = req.body;
+    const product = req.body;
     try {
-        const newProduct = yield Product.createProduct(name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock);
+        const newProduct = yield Product.createProduct(product);
         res.status(201).json(newProduct);
     }
     catch (error) {

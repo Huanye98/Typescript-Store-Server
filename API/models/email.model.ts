@@ -1,7 +1,8 @@
-const pool = require("../../db/index");
-const transporter = require("../../transporter/index");
-const fs = require("fs");
+import { NewsletterRow } from "../../types/Users";
+const transporter = require("../../Transporter/index");
+import pool from "../../db/index";
 const path = require("path");
+const fs = require("fs");
 
 export const sendVerificationEmailDB = async (email:string) => {
   try {
@@ -50,14 +51,13 @@ export const sendVerificationEmailDB = async (email:string) => {
       subject: "Verify your Email",
       html: emailVerificationTemplate,
     });
-
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
     throw new Error(
-      `Database Error: failed to send verification Email. , ${errorMessage}`
+      `Database Error: failed to send verification Email. ${errorMessage}`
     );
   }
 };
@@ -75,7 +75,7 @@ export const verifyEmailInDb = async (token:string) => {
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
-      errorMessage = "Invalid or expired token";
+      errorMessage = error.message;
     }
     throw new Error(`Database Error: failed to verify email. ${errorMessage}`);
   }
@@ -84,7 +84,7 @@ export const verifyEmailInDb = async (token:string) => {
 export const addEmailToNewsLetter = async (email:string) => {
   try {
     const query =
-      "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsusbribed = false";
+      "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsubscribed = false";
     await pool.query(query, [email]);
   } catch (error) {
     let errorMessage = "Unknown error";
@@ -104,16 +104,16 @@ export const selectAndSendNewsletter = async () => {
       "select * from newsletter_subscriptions where unsubscribed = false";
     const subscribedEmails = await pool.query(query);
     await Promise.all(
-      subscribedEmails.rows.forEach(async (email:string) => {
+      subscribedEmails.rows.map(async (row:{email:string}) => {
         await transporter.sendMail({
           from: process.env.NOREPLYEMAIL,
-          to: email,
+          to: row.email,
           subject: "Newsletter",
           html: "Newsletter placeholder",
         });
       })
     );
-  } catch (error) {
+  } catch (error:unknown) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;

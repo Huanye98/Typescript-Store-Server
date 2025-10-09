@@ -21,8 +21,6 @@ module.exports = (app: Express) => {
       res.status(400).json({ error: err.message });
     }
 
-    res
-      .status(500)
-      .json({ message: "Internal server error. Check server console" });
-  });
+    console.error("Headers already sent. Cannot send response to client.");
+  })
 };

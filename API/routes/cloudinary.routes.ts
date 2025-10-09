@@ -4,4 +4,5 @@ const cloudinaryController = require("../controllers/cloudinary.controller")
 const uploader = require("../middlewares/cloudinary.middlewares")
 
 router.post("/", uploader.single("image"), cloudinaryController.uploadImage);
-module.exports = router;
+
+export default router;

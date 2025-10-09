@@ -1,5 +1,6 @@
 const Product = require("../models/Product.model");
 import { Request, Response, NextFunction } from 'express';
+import { ProductInput } from '../../types/Products';
 
 const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -20,31 +21,9 @@ const getProducts = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 const createProduct = async (req: Request, res: Response, next: NextFunction) => {
-  const {
-    name,
-    price,
-    description,
-    isavaliable,
-    discountvalue,
-    imageurl,
-    category,
-    collection_id,
-    is_featured,
-    stock,
-  } = req.body;
+  const product = req.body;
   try {
-    const newProduct = await Product.createProduct(
-      name,
-      price,
-      description,
-      isavaliable,
-      discountvalue,
-      imageurl,
-      category,
-      collection_id,
-      is_featured,
-      stock
-    );
+    const newProduct = await Product.createProduct(product as ProductInput);
     res.status(201).json(newProduct);
   } catch (error) {
     next(error);

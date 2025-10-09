@@ -3,34 +3,35 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "nodemon dist/server.js",
+    "dev": "nodemon --exec ts-node server.ts"
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
-    "@sendgrid/mail": "^8.1.4",
     "@types/morgan": "^1.9.10",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "css-select": "^6.0.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "graphql": "^16.9.0",
     "jsonwebtoken": "^9.0.2",
+    "marked": "^16.2.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^6.10.0",
-    "nodemailer-sendgrid-transport": "^0.2.0",
     "nodemon": "^3.1.9",
     "pg": "^8.13.1",
     "stripe": "^17.5.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.3",
+    "@types/express": "^4.17.23",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
-    "typescript": "^5.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

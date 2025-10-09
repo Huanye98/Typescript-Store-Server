@@ -8,15 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.selectAndSendNewsletter = exports.addEmailToNewsLetter = exports.verifyEmailInDb = exports.sendVerificationEmailDB = void 0;
-const pool = require("../../db/index");
-const transporter = require("../../transporter/index");
-const fs = require("fs");
+const transporter = require("../../Transporter/index");
+const index_1 = __importDefault(require("../../db/index"));
 const path = require("path");
+const fs = require("fs");
 const sendVerificationEmailDB = (email) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const isEmailRegistered = yield pool.query("SELECT * FROM users WHERE email = $1", [email]);
+        const isEmailRegistered = yield index_1.default.query("SELECT * FROM users WHERE email = $1", [email]);
         if (isEmailRegistered.rowCount === 0) {
             throw new Error("Email not registered");
         }
@@ -24,13 +27,13 @@ const sendVerificationEmailDB = (email) => __awaiter(void 0, void 0, void 0, fun
             throw new Error("Email already verified");
         }
         const user_id_query = "SELECT id FROM users WHERE email = $1";
-        const userIdResult = yield pool.query(user_id_query, [email]);
+        const userIdResult = yield index_1.default.query(user_id_query, [email]);
         if (userIdResult.rowCount === 0) {
             throw new Error("User not found");
         }
         const userId = userIdResult.rows[0].id;
         const emailVerificationTokenQuery = "INSERT INTO email_tokens (user_id) values ($1) RETURNING token";
-        const emailVerificationToken = yield pool.query(emailVerificationTokenQuery, [userId]);
+        const emailVerificationToken = yield index_1.default.query(emailVerificationTokenQuery, [userId]);
         const token = emailVerificationToken.rows[0].token;
         let verificationLink = `${process.env.BASE_URL}/verify-email?token=${token}`;
         const emailTemplatePath = path.join(__dirname, "../../emailVerification.html");
@@ -48,14 +51,14 @@ const sendVerificationEmailDB = (email) => __awaiter(void 0, void 0, void 0, fun
         if (error instanceof Error) {
             errorMessage = error.message;
         }
-        throw new Error(`Database Error: failed to send verification Email. , ${errorMessage}`);
+        throw new Error(`Database Error: failed to send verification Email. ${errorMessage}`);
     }
 });
 exports.sendVerificationEmailDB = sendVerificationEmailDB;
 const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = "update users set is_verified = true from email_tokens where users.id = email_tokens.user_id and email_tokens.token = $1 and expires_at > NOW() returning users.*";
-        const result = yield pool.query(query, [token]);
+        const result = yield index_1.default.query(query, [token]);
         if (result.rowCount === 0) {
             throw new Error("Invalid or expired token");
         }
@@ -64,7 +67,7 @@ const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* (
     catch (error) {
         let errorMessage = "Unknown error";
         if (error instanceof Error) {
-            errorMessage = "Invalid or expired token";
+            errorMessage = error.message;
         }
         throw new Error(`Database Error: failed to verify email. ${errorMessage}`);
     }
@@ -72,8 +75,8 @@ const verifyEmailInDb = (token) => __awaiter(void 0, void 0, void 0, function* (
 exports.verifyEmailInDb = verifyEmailInDb;
 const addEmailToNewsLetter = (email) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const query = "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsusbribed = false";
-        yield pool.query(query, [email]);
+        const query = "insert into newsletter_subscriptions (email) values ($1) ON CONFLICT (email) DO UPDATE SET unsubscribed = false";
+        yield index_1.default.query(query, [email]);
     }
     catch (error) {
         let errorMessage = "Unknown error";
@@ -88,11 +91,11 @@ exports.addEmailToNewsLetter = addEmailToNewsLetter;
 const selectAndSendNewsletter = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = "select * from newsletter_subscriptions where unsubscribed = false";
-        const subscribedEmails = yield pool.query(query);
-        yield Promise.all(subscribedEmails.rows.forEach((email) => __awaiter(void 0, void 0, void 0, function* () {
+        const subscribedEmails = yield index_1.default.query(query);
+        yield Promise.all(subscribedEmails.rows.map((row) => __awaiter(void 0, void 0, void 0, function* () {
             yield transporter.sendMail({
                 from: process.env.NOREPLYEMAIL,
-                to: email,
+                to: row.email,
                 subject: "Newsletter",
                 html: "Newsletter placeholder",
             });

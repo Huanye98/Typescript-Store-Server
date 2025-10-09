@@ -1,11 +1,13 @@
 import {Client} from "pg";
-require('dotenv').config();
+import dotenv from "dotenv"
+
+dotenv.config();
 
 const db = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl:{
-    rejectUnauthorized: false
-  },
+  // connectionString: process.env.DATABASE_URL,
+  // ssl:{
+  //   rejectUnauthorized: false
+  // },
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
@@ -15,6 +17,12 @@ const db = new Client({
 
 db.connect()
 .then(()=>console.log('Connected to PostgreSQL'))
-.catch((error:unknown)=>console.log("Failed to connect to PostgreSQL"))
+.catch((error:unknown)=>{
+  if(error instanceof Error){
+    console.error('Failed to connect to PostgreSQL', error.message)
+  }else{
+    console.error('Failed to connect to PostgreSQL', error)
+  }
+})
 
-module.exports = db
+export default db

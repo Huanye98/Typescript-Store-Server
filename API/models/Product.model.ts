@@ -1,25 +1,29 @@
-import { Product,Filters,ProductInput,ProductUpdates} from "../../types/Products";
+import {
+  Product,
+  Filters,
+  ProductInput,
+  ProductUpdates,
+} from "../../types/Products";
+import db from "../../db";
 
-const { query } = require("express");
-const db = require("../../db/index");
-
-const queryAllProducts = async ()=>{
-  const allQuery = "select * from products"
+const queryAllProducts = async () => {
+  const allQuery = "select name,id from products";
 
   try {
-    const response = await db.query(allQuery)
-    return response.rows
+    const response = await db.query(allQuery);
+    return response.rows;
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(`Database Error:was not able to fetch all products. ${errorMessage} `)
+    throw new Error(
+      `Database Error:was not able to fetch all products. ${errorMessage} `
+    );
   }
-}
+};
 
-const getProducts = async (filters :Filters) => {
-  //query selectors
+const getProducts = async (filters: Filters) => {
   const {
     id,
     category,
@@ -32,8 +36,7 @@ const getProducts = async (filters :Filters) => {
     search,
   } = filters;
 
-  let baseQuery = 
-  ` from products 
+  let baseQuery = `from products 
   left join collections on products.collection_id = collections.id 
   where 1 = 1`;
   const values = [];
@@ -47,11 +50,11 @@ const getProducts = async (filters :Filters) => {
     baseQuery += ` AND products.category = $${index++}`;
     values.push(category);
   }
-  if (is_featured){
+  if (is_featured) {
     baseQuery += ` AND products.is_featured = $${index++}`;
     values.push(is_featured);
   }
-  if (isavaliable){
+  if (isavaliable) {
     baseQuery += ` AND products.isavaliable = $${index++}`;
     values.push(isavaliable);
   }
@@ -75,7 +78,7 @@ const getProducts = async (filters :Filters) => {
   //sort
   if (sort) {
     const [column, direction] = sort.split(":");
-    const validColumns = ["name", "price", "items_sold", "created_at",];
+    const validColumns = ["name", "price", "items_sold", "created_at"];
     const validDirections = ["asc", "desc"];
 
     if (
@@ -105,14 +108,15 @@ const getProducts = async (filters :Filters) => {
 
     const totalCount = parseInt(countResult.rows[0].count, 10);
 
-    const products = productRows.rows
-    products.forEach((product:Product)=>{
-      if(product.discountvalue !== 1){
-        product.finalPrice = product.price - (product.price*product.discountvalue)
-      }else{
-        product.finalPrice = product.price
+    const products = productRows.rows;
+    products.forEach((product: Product) => {
+      if (product.discountvalue !== 1) {
+        product.finalPrice =
+          product.price - product.price * product.discountvalue;
+      } else {
+        product.finalPrice = product.price;
       }
-    })
+    });
 
     return { products, totalCount };
   } catch (error) {
@@ -120,18 +124,32 @@ const getProducts = async (filters :Filters) => {
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(`Database Error: Was not able to fetch selected products. ${errorMessage}`);
+    throw new Error(
+      `Database Error: Was not able to fetch selected products. ${errorMessage}`
+    );
   }
 };
 
-const createProduct = async (
-  product:ProductInput
-) => {
-const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock } = product;
-
+const createProduct = async (product: ProductInput) => {
+  const {
+    name,
+    price,
+    description,
+    isavaliable,
+    discountvalue,
+    imageurl,
+    category,
+    collection_id,
+    is_featured,
+    stock,
+  } = product;
+  console.log(product);
+  if(!name || price===undefined || price===null){
+    throw new Error("Name and price are required");
+  }
+  
   let query = `insert into products (name, price`;
-  const values = [name, price];
-
+  const values: (string | number | boolean)[] = [name, price];
   // Check each filter for inclusion in the query and values
   if (collection_id !== undefined) {
     query += `, collection_id`;
@@ -166,7 +184,9 @@ const { name, price, description, isavaliable, discountvalue, imageurl, category
     values.push(stock);
   }
 
-  query += `) VALUES (${values.map((_, i) => `$${i + 1}`).join(", ")}) RETURNING *`;
+  query += `) VALUES (${values
+    .map((_, i) => `$${i + 1}`)
+    .join(", ")}) RETURNING *`;
 
   try {
     const res = await db.query(query, values);
@@ -176,11 +196,13 @@ const { name, price, description, isavaliable, discountvalue, imageurl, category
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(`Database Error: Failed to create product. ${errorMessage}`);
+    throw new Error(
+      `Database Error: Failed to create product. ${errorMessage}`
+    );
   }
 };
 
-const findAndDeleteProduct = async (id:number) => {
+const findAndDeleteProduct = async (id: number) => {
   if (!id) {
     throw new Error("Product ID is required for deletion.");
   }
@@ -196,40 +218,47 @@ const findAndDeleteProduct = async (id:number) => {
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(`Database Error: Failed to delete product. ${errorMessage}`);
+    throw new Error(
+      `Database Error: Failed to delete product. ${errorMessage}`
+    );
   }
 };
 
-const patchProductInDB = async (productId:number, updates:ProductUpdates) => {
+const patchProductInDB = async (productId: number, updates: ProductUpdates) => {
+  if (!productId) {
+    throw new Error("Product ID is required");
+  }
   if (!updates || Object.keys(updates).length === 0) {
     throw new Error("No updates provided");
   }
+
   const sanitizedUpdates = Object.fromEntries(
     Object.entries(updates).map(([key, value]) => [
       key,
       value === "" ? null : value,
     ])
   );
+  const fields = Object.keys(sanitizedUpdates);
+  const values = Object.values(sanitizedUpdates);
+  const addToQuery = fields
+    .map((field, index) => `${field} = $${index + 1}`)
+    .join(", ");
+
+  const query = `UPDATE products SET ${addToQuery} WHERE id = $${
+    fields.length + 1
+  }`;
   try {
-    const fields = Object.keys(sanitizedUpdates);
-    const values = Object.values(sanitizedUpdates);
-
-    const addToQuery = fields
-      .map((field, index) => `${field} = $${index + 1}`)
-      .join(", ");
-
-    const query = `UPDATE products SET ${addToQuery} WHERE id = $${
-      fields.length + 1
-    }`;
     await db.query(query, [...values, productId]);
-
     return { message: "Product updated successfully" };
+
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
-    throw new Error(`Database Error: Failed to update product. ${errorMessage}`);
+    throw new Error(
+      `Database Error: Failed to update product. ${errorMessage}`
+    );
   }
 };
 
@@ -238,5 +267,5 @@ module.exports = {
   createProduct,
   findAndDeleteProduct,
   patchProductInDB,
-  queryAllProducts
+  queryAllProducts,
 };

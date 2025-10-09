@@ -16,9 +16,9 @@ router.get("/verify-email", emailController.verifyEmail)
 //cart
 router.post("/cart",usersController.addProductToCart)
 router.delete("/cart",usersController.removeProductFromCart)
-
 //get all users data if you are admin
 router.get("/all",verifyToken, roleValidation("admin"), usersController.getAllUsers)
+
 //user gets their data
 router.get("/:id",usersController.userGetsData)
 //patch profile data

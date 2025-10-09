@@ -8,13 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const { query } = require("express");
-const db = require("../../db/index");
+const db_1 = __importDefault(require("../../db"));
 const queryAllProducts = () => __awaiter(void 0, void 0, void 0, function* () {
-    const allQuery = "select * from products";
+    const allQuery = "select name,id from products";
     try {
-        const response = yield db.query(allQuery);
+        const response = yield db_1.default.query(allQuery);
         return response.rows;
     }
     catch (error) {
@@ -26,9 +28,8 @@ const queryAllProducts = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const getProducts = (filters) => __awaiter(void 0, void 0, void 0, function* () {
-    //query selectors
     const { id, category, collection, sort, isavaliable, is_featured, page = 1, limit = 10, search, } = filters;
-    let baseQuery = ` from products 
+    let baseQuery = `from products 
   left join collections on products.collection_id = collections.id 
   where 1 = 1`;
     const values = [];
@@ -68,7 +69,7 @@ const getProducts = (filters) => __awaiter(void 0, void 0, void 0, function* () 
     //sort
     if (sort) {
         const [column, direction] = sort.split(":");
-        const validColumns = ["name", "price", "items_sold", "created_at",];
+        const validColumns = ["name", "price", "items_sold", "created_at"];
         const validDirections = ["asc", "desc"];
         if (validColumns.includes(column) &&
             validDirections.includes(direction.toLowerCase())) {
@@ -86,14 +87,15 @@ const getProducts = (filters) => __awaiter(void 0, void 0, void 0, function* () 
     queryText += ` LIMIT $${index++} OFFSET $${index++}`;
     values.push(limit, offset);
     try {
-        const productRows = yield db.query(queryText, values);
+        const productRows = yield db_1.default.query(queryText, values);
         const countValues = values.slice(0, values.length - 2);
-        const countResult = yield db.query(countQuery, countValues);
+        const countResult = yield db_1.default.query(countQuery, countValues);
         const totalCount = parseInt(countResult.rows[0].count, 10);
         const products = productRows.rows;
         products.forEach((product) => {
             if (product.discountvalue !== 1) {
-                product.finalPrice = product.price - (product.price * product.discountvalue);
+                product.finalPrice =
+                    product.price - product.price * product.discountvalue;
             }
             else {
                 product.finalPrice = product.price;
@@ -110,7 +112,11 @@ const getProducts = (filters) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 const createProduct = (product) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock } = product;
+    const { name, price, description, isavaliable, discountvalue, imageurl, category, collection_id, is_featured, stock, } = product;
+    console.log(product);
+    if (!name || price === undefined || price === null) {
+        throw new Error("Name and price are required");
+    }
     let query = `insert into products (name, price`;
     const values = [name, price];
     // Check each filter for inclusion in the query and values
@@ -146,9 +152,11 @@ const createProduct = (product) => __awaiter(void 0, void 0, void 0, function* (
         query += `, stock`;
         values.push(stock);
     }
-    query += `) VALUES (${values.map((_, i) => `$${i + 1}`).join(", ")}) RETURNING *`;
+    query += `) VALUES (${values
+        .map((_, i) => `$${i + 1}`)
+        .join(", ")}) RETURNING *`;
     try {
-        const res = yield db.query(query, values);
+        const res = yield db_1.default.query(query, values);
         return res.rows[0];
     }
     catch (error) {
@@ -165,7 +173,7 @@ const findAndDeleteProduct = (id) => __awaiter(void 0, void 0, void 0, function*
     }
     const query = `DELETE FROM products where id = $1 RETURNING *`;
     try {
-        const { rows } = yield db.query(query, [id]);
+        const { rows } = yield db_1.default.query(query, [id]);
         if (rows.length === 0) {
             throw new Error(`Product with ID ${id} not found`);
         }
@@ -180,6 +188,9 @@ const findAndDeleteProduct = (id) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 const patchProductInDB = (productId, updates) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!productId) {
+        throw new Error("Product ID is required");
+    }
     if (!updates || Object.keys(updates).length === 0) {
         throw new Error("No updates provided");
     }
@@ -187,14 +198,14 @@ const patchProductInDB = (productId, updates) => __awaiter(void 0, void 0, void 
         key,
         value === "" ? null : value,
     ]));
+    const fields = Object.keys(sanitizedUpdates);
+    const values = Object.values(sanitizedUpdates);
+    const addToQuery = fields
+        .map((field, index) => `${field} = $${index + 1}`)
+        .join(", ");
+    const query = `UPDATE products SET ${addToQuery} WHERE id = $${fields.length + 1}`;
     try {
-        const fields = Object.keys(sanitizedUpdates);
-        const values = Object.values(sanitizedUpdates);
-        const addToQuery = fields
-            .map((field, index) => `${field} = $${index + 1}`)
-            .join(", ");
-        const query = `UPDATE products SET ${addToQuery} WHERE id = $${fields.length + 1}`;
-        yield db.query(query, [...values, productId]);
+        yield db_1.default.query(query, [...values, productId]);
         return { message: "Product updated successfully" };
     }
     catch (error) {
@@ -210,5 +221,5 @@ module.exports = {
     createProduct,
     findAndDeleteProduct,
     patchProductInDB,
-    queryAllProducts
+    queryAllProducts,
 };

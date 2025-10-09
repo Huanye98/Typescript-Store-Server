@@ -1,6 +1,16 @@
 import { Request,Response,NextFunction } from "express";
 const Users = require("../models/Users.model");
 
+declare module "express" {
+  interface Request {
+    user?: {
+      userId: number;
+      role: "admin" | "user";
+      cartId?: number;
+    };
+  }
+}
+
 const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const allUsers = await Users.getAllUsers();
@@ -30,32 +40,27 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 const addProductToCart = async (req: Request, res: Response, next: NextFunction) => {
-  const { product_id, quantity, user_id, cart_id } = req.body;
+  const cartData = req.body;
   console.log(req.body);
-  if (!product_id) {
+  if (!cartData.product_id) {
     return res
       .status(400)
       .json({ message: "Missing required field: productId" });
   }
-  if (!quantity) {
+  if (!cartData.quantity) {
     return res
       .status(400)
       .json({ message: "Missing required field: quantity" });
   }
-  if (!user_id) {
+  if (!cartData.user_id) {
     return res.status(400).json({ message: "Missing required field: userId" });
   }
-  if (!cart_id) {
+  if (!cartData.cart_id) {
     return res.status(400).json({ message: "Missing required field: cart_id" });
   }
 
   try {
-    const response = await Users.addProductToUserCartDb(
-      product_id,
-      quantity,
-      user_id,
-      cart_id
-    );
+    const response = await Users.addProductToUserCartDb(cartData);
     res.status(200).json({ message: "product added successfully", response });
   } catch (error) {
     next(error);
@@ -105,7 +110,7 @@ const modifyUserData = async (req: Request, res: Response, next: NextFunction) =
 
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  if(req.user===undefined){
+  if(!req.user){
     return res.status(401).json({ errorMessage: "Unauthorized" });
   }
   const userId = req.user.userId;

@@ -10,7 +10,7 @@
         "rootDir": "./",
         "lib": ["es6", "dom"]
     },
-    "include": ["**/*.ts", "API/controllers/cloudinary.controller.js"],
+    "include": ["**/*.ts", "API/controllers/cloudinary.controller.js","./types/**/*.d.ts"],
     "exclude": [
         "node_modules", 
         "dist",

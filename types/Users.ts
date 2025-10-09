@@ -3,6 +3,10 @@ export interface User {
   role: "admin" | "user";
   cartId?: number;
 }
+export interface UserResponse extends User {
+  stripePrice: number;
+  cartPrice: number;
+}
 export interface cartData {
   product_id: number;
   quantity: number;
@@ -27,8 +31,7 @@ export interface Transaction{
   status: string,
   clientSecret: string
 }
-export interface User {
-  userId: number;
-  role: "admin" | "user";
-  cartId?: number;
+
+export interface NewsletterRow {
+  email: string;
 }

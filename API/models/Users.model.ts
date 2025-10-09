@@ -1,6 +1,6 @@
-import {cartData,CartItem} from "../../types/Users";
+import {cartData,CartItem, UserResponse} from "../../types/Users";
 
-const pool = require("../../db/index");
+import pool from "../../db";
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
@@ -158,16 +158,15 @@ const addProductToUserCartDb = async (
   const userCheckQuery = "SELECT * FROM users WHERE id = $1";
   const userResponse = await pool.query(userCheckQuery, [user_id]);
   if (userResponse.rows.length === 0) {
-    console.log("User does not exist");
-    return;
+    throw new Error("User does not exist");
   }
 
   const checkIfProductExists =
-    "select * from cart_items where user_id = $1 and product_id = $2 ";
+    "select * from cart_items where user_id = $1 and product_id = $2  ";
   const addProduct =
-    "insert into cart_items (user_id, product_id, quantity,cart_id) values($1, $2, $3, $4)";
+    "insert into cart_items (user_id, product_id, quantity,cart_id) values($1, $2, $3, $4) returning *";
   const updateProductQuantity =
-    " UPDATE cart_items SET quantity = quantity + $1 WHERE user_id = $2 AND product_id = $3";
+    " UPDATE cart_items SET quantity = quantity + $1 WHERE user_id = $2 AND product_id = $3 returning *";
 
   try {
     const response = await pool.query(checkIfProductExists, [
@@ -176,11 +175,10 @@ const addProductToUserCartDb = async (
     ]);
     if (response.rows.length > 0) {
       await pool.query(updateProductQuantity, [quantity, user_id, product_id]);
-      console.log("Product successfully updated in the cart");
     } else {
       await pool.query(addProduct, [user_id, product_id, quantity, cart_id]);
-      console.log("Product successfully added in the cart");
     }
+
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
@@ -204,8 +202,7 @@ const removeProductFromUserCartDb = async (product_id:number, quantity:number, u
   const userCheckQuery = "SELECT * FROM users WHERE id = $1";
   const userResponse = await pool.query(userCheckQuery, [user_id]);
   if (userResponse.rows.length === 0) {
-    console.log("User does not exist");
-    return;
+    throw new Error("User does not exist");
   }
 
   const checkIfProductExists =
@@ -226,17 +223,15 @@ const removeProductFromUserCartDb = async (product_id:number, quantity:number, u
 
       if (newQuantity <= 0) {
         await pool.query(removeProduct, [user_id, product_id]);
-        console.log("Product successfully updated from the cart");
       } else {
         await pool.query(updateProductQuantity, [
           quantity,
           user_id,
           product_id,
         ]);
-        console.log("Product successfully removed from the cart");
       }
     } else {
-      console.log("Product not found in cart");
+      throw new Error("Product not found in cart");
     }
   } catch (error) {
     let errorMessage = "Unknown error";
@@ -252,32 +247,37 @@ const removeProductFromUserCartDb = async (product_id:number, quantity:number, u
 const modifyUserDataDB = async (email:string, address:string, password:string, user_id:number, name:string) => {
   try {
     let baseQuery = "UPDATE users SET ";
-    let values = [];
+    let updates: string[] = []
+    let values: (string | number)[] = [];
+    let index = 1
     if(name){
-      baseQuery += "name = $1 ";
+      updates.push(`name = $${index++}`);
       values.push(name);
     }
-
     if (email) {
-      baseQuery += "email = $1  ";
+      updates.push(`email = $${index++}`);
       values.push(email);
     }
     if (address) {
-      baseQuery += "address = $1 ";
+      updates.push(`address = $${index++}`);
       values.push(address);
     }
     if (password) {
       const salt = 10;
       const hashPassword = await bcrypt.hash(password, salt);
-      baseQuery += "password = $1 ";
+      updates.push(`password = $${index++}`);
       values.push(hashPassword);
     }
+     if(updates.length === 0){
+      throw new Error("No fields to update");
+    }
 
-    baseQuery += " WHERE id = $2";
+    baseQuery += updates.join(", ") + ` WHERE id = $${index} RETURNING *`;
     values.push(user_id);
-    console.log(baseQuery, values);
+
+
     const response = await pool.query(baseQuery, values);
-    console.log("User data successfully updated", response);
+    return response.rows[0];
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
@@ -289,20 +289,7 @@ const modifyUserDataDB = async (email:string, address:string, password:string, u
   }
 };
 
-const getUserById = async (id:number) => {
-  try {
-    const result = await pool.query("SELECT * FROM Users WHERE id = $1", [id]);
-    return result.rows[0];
-  } catch (error) {
-    let errorMessage = "Unknown error";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    throw new Error(
-      `Database Error: was not able to get selected user. ${errorMessage}`
-    );
-  }
-};
+
 const deleteUserFromDB = async (user_id:number,cart_id:number) => {
   try {
     const query = `delete from users where id = $1;`;
@@ -353,15 +340,26 @@ const userGetTheirData = async (id:number) => {
     GROUP BY users.id;
   `;
 
-    const response = await pool.query(query, [id]);
-    const cart = response.rows[0].cart_items || [];
-    const cartPrice = Object.values(cart).reduce((accumulator, item) => {
-      return accumulator + item.final_price * item.quantity;
-    }, 0);
-    response.rows[0].stripePrice = cartPrice * 100;
-    response.rows[0].cartPrice = cartPrice;
-
-    return response.rows;
+    const result = await pool.query(query, [id]);
+    const userData = result.rows[0];
+    if (!userData) {
+      throw new Error("User not found");
+    }
+    
+    const cartItems= userData.cart_items || []
+    const cartPrice = cartItems.reduce((accumulator:number, item:CartItem) => accumulator + item.final_price * item.quantity, 0);
+  
+    return{
+      user:{
+        id: userData.user_id,
+        email: userData.user_email,
+        address: userData.user_address,
+        name: userData.user_name,
+        cartPrice,
+        stripePrice: cartPrice * 100
+      },
+      cart: cartItems,
+    };
   } catch (error) {
     let errorMessage = "Unknown error";
     if (error instanceof Error) {
@@ -375,7 +373,7 @@ const userGetTheirData = async (id:number) => {
 
 const emptyCartFromDb = async (cart_id:number) => {
   if (!cart_id) {
-    throw new Error("No cart_id");
+    throw new Error("No cart id");
   }
   try {
     const query = "Delete from cart_items where cart_id = $1";
@@ -396,7 +394,6 @@ module.exports = {
   addProductToUserCartDb,
   removeProductFromUserCartDb,
   deleteUserFromDB,
-  getUserById,
   modifyUserDataDB,
   userGetTheirData,
   emptyCartFromDb,

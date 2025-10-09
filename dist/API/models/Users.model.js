@@ -8,14 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const pool = require("../../db/index");
+const db_1 = __importDefault(require("../../db"));
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const checkIfEmailIsUsed = (email) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = "select * from users where email = $1";
-        const response = yield pool.query(query, [email]);
+        const response = yield db_1.default.query(query, [email]);
         return response.rows.length > 0;
     }
     catch (error) {
@@ -41,9 +44,9 @@ const createUser = (email, password) => __awaiter(void 0, void 0, void 0, functi
         }
         const salt = 10;
         const hashPassword = yield bcrypt.hash(password, salt);
-        const userRes = yield pool.query("INSERT INTO users(email,password) VALUES ($1, $2) RETURNING *", [email, hashPassword]);
-        const cartRes = yield pool.query("insert into cart(user_id) values ($1) returning *", [userRes.rows[0].id]);
-        yield pool.query("update users set cart_id = $1 where id = $2", [
+        const userRes = yield db_1.default.query("INSERT INTO users(email,password) VALUES ($1, $2) RETURNING *", [email, hashPassword]);
+        const cartRes = yield db_1.default.query("insert into cart(user_id) values ($1) returning *", [userRes.rows[0].id]);
+        yield db_1.default.query("update users set cart_id = $1 where id = $2", [
             cartRes.rows[0].id,
             userRes.rows[0].id,
         ]);
@@ -80,7 +83,7 @@ const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
   LEFT JOIN products ON cart_items.product_id = products.id
   GROUP BY users.id, cart.id;
 `;
-        const response = yield pool.query(query);
+        const response = yield db_1.default.query(query);
         return response.rows;
     }
     catch (error) {
@@ -93,7 +96,7 @@ const getAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const login = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const res = yield pool.query(" select * from users where email = $1 ", [
+        const res = yield db_1.default.query(" select * from users where email = $1 ", [
             email,
         ]);
         const user = res.rows[0];
@@ -141,26 +144,23 @@ const addProductToUserCartDb = (cartData) => __awaiter(void 0, void 0, void 0, f
         return { message: "Missing required field: cart_id" };
     }
     const userCheckQuery = "SELECT * FROM users WHERE id = $1";
-    const userResponse = yield pool.query(userCheckQuery, [user_id]);
+    const userResponse = yield db_1.default.query(userCheckQuery, [user_id]);
     if (userResponse.rows.length === 0) {
-        console.log("User does not exist");
-        return;
+        throw new Error("User does not exist");
     }
-    const checkIfProductExists = "select * from cart_items where user_id = $1 and product_id = $2 ";
-    const addProduct = "insert into cart_items (user_id, product_id, quantity,cart_id) values($1, $2, $3, $4)";
-    const updateProductQuantity = " UPDATE cart_items SET quantity = quantity + $1 WHERE user_id = $2 AND product_id = $3";
+    const checkIfProductExists = "select * from cart_items where user_id = $1 and product_id = $2  ";
+    const addProduct = "insert into cart_items (user_id, product_id, quantity,cart_id) values($1, $2, $3, $4) returning *";
+    const updateProductQuantity = " UPDATE cart_items SET quantity = quantity + $1 WHERE user_id = $2 AND product_id = $3 returning *";
     try {
-        const response = yield pool.query(checkIfProductExists, [
+        const response = yield db_1.default.query(checkIfProductExists, [
             user_id,
             product_id,
         ]);
         if (response.rows.length > 0) {
-            yield pool.query(updateProductQuantity, [quantity, user_id, product_id]);
-            console.log("Product successfully updated in the cart");
+            yield db_1.default.query(updateProductQuantity, [quantity, user_id, product_id]);
         }
         else {
-            yield pool.query(addProduct, [user_id, product_id, quantity, cart_id]);
-            console.log("Product successfully added in the cart");
+            yield db_1.default.query(addProduct, [user_id, product_id, quantity, cart_id]);
         }
     }
     catch (error) {
@@ -182,16 +182,15 @@ const removeProductFromUserCartDb = (product_id, quantity, user_id) => __awaiter
         throw new Error("Missing required field: userId");
     }
     const userCheckQuery = "SELECT * FROM users WHERE id = $1";
-    const userResponse = yield pool.query(userCheckQuery, [user_id]);
+    const userResponse = yield db_1.default.query(userCheckQuery, [user_id]);
     if (userResponse.rows.length === 0) {
-        console.log("User does not exist");
-        return;
+        throw new Error("User does not exist");
     }
     const checkIfProductExists = "select * from cart_items where user_id = $1 and product_id = $2 ";
     const removeProduct = "delete from cart_items where user_id = $1 and product_id = $2 ";
     const updateProductQuantity = " UPDATE cart_items SET quantity = quantity - $1 WHERE user_id = $2 AND product_id = $3";
     try {
-        const response = yield pool.query(checkIfProductExists, [
+        const response = yield db_1.default.query(checkIfProductExists, [
             user_id,
             product_id,
         ]);
@@ -199,20 +198,18 @@ const removeProductFromUserCartDb = (product_id, quantity, user_id) => __awaiter
             const currentQuantity = response.rows[0].quantity;
             const newQuantity = currentQuantity - quantity;
             if (newQuantity <= 0) {
-                yield pool.query(removeProduct, [user_id, product_id]);
-                console.log("Product successfully updated from the cart");
+                yield db_1.default.query(removeProduct, [user_id, product_id]);
             }
             else {
-                yield pool.query(updateProductQuantity, [
+                yield db_1.default.query(updateProductQuantity, [
                     quantity,
                     user_id,
                     product_id,
                 ]);
-                console.log("Product successfully removed from the cart");
             }
         }
         else {
-            console.log("Product not found in cart");
+            throw new Error("Product not found in cart");
         }
     }
     catch (error) {
@@ -226,30 +223,34 @@ const removeProductFromUserCartDb = (product_id, quantity, user_id) => __awaiter
 const modifyUserDataDB = (email, address, password, user_id, name) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let baseQuery = "UPDATE users SET ";
+        let updates = [];
         let values = [];
+        let index = 1;
         if (name) {
-            baseQuery += "name = $1 ";
+            updates.push(`name = $${index++}`);
             values.push(name);
         }
         if (email) {
-            baseQuery += "email = $1  ";
+            updates.push(`email = $${index++}`);
             values.push(email);
         }
         if (address) {
-            baseQuery += "address = $1 ";
+            updates.push(`address = $${index++}`);
             values.push(address);
         }
         if (password) {
             const salt = 10;
             const hashPassword = yield bcrypt.hash(password, salt);
-            baseQuery += "password = $1 ";
+            updates.push(`password = $${index++}`);
             values.push(hashPassword);
         }
-        baseQuery += " WHERE id = $2";
+        if (updates.length === 0) {
+            throw new Error("No fields to update");
+        }
+        baseQuery += updates.join(", ") + ` WHERE id = $${index} RETURNING *`;
         values.push(user_id);
-        console.log(baseQuery, values);
-        const response = yield pool.query(baseQuery, values);
-        console.log("User data successfully updated", response);
+        const response = yield db_1.default.query(baseQuery, values);
+        return response.rows[0];
     }
     catch (error) {
         let errorMessage = "Unknown error";
@@ -259,25 +260,12 @@ const modifyUserDataDB = (email, address, password, user_id, name) => __awaiter(
         throw new Error(`Database Error: Was not able to modify user. ${errorMessage}`);
     }
 });
-const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const result = yield pool.query("SELECT * FROM Users WHERE id = $1", [id]);
-        return result.rows[0];
-    }
-    catch (error) {
-        let errorMessage = "Unknown error";
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        }
-        throw new Error(`Database Error: was not able to get selected user. ${errorMessage}`);
-    }
-});
 const deleteUserFromDB = (user_id, cart_id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const query = `delete from users where id = $1;`;
         const query2 = `delete from cart where id = $1;`;
-        const response = yield pool.query(query, [user_id]);
-        yield pool.query(query2, [cart_id]);
+        const response = yield db_1.default.query(query, [user_id]);
+        yield db_1.default.query(query2, [cart_id]);
         return response.rows[0];
     }
     catch (error) {
@@ -319,14 +307,24 @@ const userGetTheirData = (id) => __awaiter(void 0, void 0, void 0, function* () 
     WHERE users.id = $1
     GROUP BY users.id;
   `;
-        const response = yield pool.query(query, [id]);
-        const cart = response.rows[0].cart_items || [];
-        const cartPrice = Object.values(cart).reduce((accumulator, item) => {
-            return accumulator + item.final_price * item.quantity;
-        }, 0);
-        response.rows[0].stripePrice = cartPrice * 100;
-        response.rows[0].cartPrice = cartPrice;
-        return response.rows;
+        const result = yield db_1.default.query(query, [id]);
+        const userData = result.rows[0];
+        if (!userData) {
+            throw new Error("User not found");
+        }
+        const cartItems = userData.cart_items || [];
+        const cartPrice = cartItems.reduce((accumulator, item) => accumulator + item.final_price * item.quantity, 0);
+        return {
+            user: {
+                id: userData.user_id,
+                email: userData.user_email,
+                address: userData.user_address,
+                name: userData.user_name,
+                cartPrice,
+                stripePrice: cartPrice * 100
+            },
+            cart: cartItems,
+        };
     }
     catch (error) {
         let errorMessage = "Unknown error";
@@ -338,11 +336,11 @@ const userGetTheirData = (id) => __awaiter(void 0, void 0, void 0, function* () 
 });
 const emptyCartFromDb = (cart_id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!cart_id) {
-        throw new Error("No cart_id");
+        throw new Error("No cart id");
     }
     try {
         const query = "Delete from cart_items where cart_id = $1";
-        yield pool.query(query, [cart_id]);
+        yield db_1.default.query(query, [cart_id]);
     }
     catch (error) {
         let errorMessage = "Unknown error";
@@ -359,7 +357,6 @@ module.exports = {
     addProductToUserCartDb,
     removeProductFromUserCartDb,
     deleteUserFromDB,
-    getUserById,
     modifyUserDataDB,
     userGetTheirData,
     emptyCartFromDb,

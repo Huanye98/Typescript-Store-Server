@@ -4,21 +4,20 @@ const router = require("express").Router();
 router.get("/", (req: Request, res: Response, next: NextFunction) => {
   res.json("All good in here");
 });
-
-const productRouter = require("./products.routes")
+import productRouter from "./products.routes"
 router.use("/products", productRouter)
 
-const usersRouter = require("./users.routes")
+import usersRouter from "./users.routes"
 router.use("/users", usersRouter)
 
 
-const authRouter = require("./auth.routes")
+import authRouter from "./auth.routes"
 router.use("/auth", authRouter)
 
-const stripeRouter = require("./stripe.routes")
+import stripeRouter from "./stripe.routes"
 router.use("/payment", stripeRouter)
 
-const cloudinaryRouter = require("./cloudinary.routes")
+import cloudinaryRouter from "./cloudinary.routes"
 router.use("/upload",cloudinaryRouter)
 
 export default router;
